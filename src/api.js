@@ -6,7 +6,7 @@ export default async function tryCatch(URL, modifier = "", method = "GET", heade
         headers: headers,
       });
       const data = await response.json();
-	  //console.log(data)
+	  console.log("Data is:", data)
       return data;
     } catch (error) {
       console.error(error);

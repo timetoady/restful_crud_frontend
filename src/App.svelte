@@ -1,10 +1,12 @@
 <script>
-	export let name;
+	import Anime from './anime.svelte'
+	
 </script>
 
 <main>
-	<h1>Hello {name}!</h1>
-	<p>Visit the <a href="https://svelte.dev/tutorial">Svelte tutorial</a> to learn how to build Svelte apps.</p>
+	<h1>Anime Enporium</h1>
+	<p>Just a little place to collect anime for your use and fun.</p>
+	<Anime/>
 </main>
 
 <style>
