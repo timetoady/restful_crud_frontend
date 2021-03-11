@@ -29,21 +29,29 @@
   let open3 = false;
   let open4 = false;
   let open5 = false;
-
+  let initialSpinner = false;
+  let searchSpinner = false;
+  let addSpinner = false;
+  let editSpinner = false;
+  let deleteSpinner = false;
 
   //Getters and setters
   const setCurrent = async () => {
+    initialSpinner= true
     let animeSets = await tryCatch(
       "https://lit-mountain-37161.herokuapp.com/anime"
     );
     currentAnime.set(animeSets);
+    initialSpinner= false
   };
   const searchMore = async () => {
     searchTrigger = true;
+    searchSpinner = true;
     const reply = await tryCatch(
       `https://api.jikan.moe/v3/search/anime?q=${currentSearch}&limit=10`
     );
     searchResults.set(reply.results);
+    searchSpinner = false
     console.log("Search results:", $searchResults);
     return reply.results;
   };
@@ -62,11 +70,13 @@
   };
 
   const handleApiSend = async (URL, upload) => {
+    addSpinner = true;
     const response = await sendAPIData(URL, upload);
     if (response._id) {
       alertVisable = true;
       alertMessage = `Anime ${response.title} added to your list.`;
       alertColor = "info";
+      addSpinner = false;
       setTimeout(() => {
         alertVisable = false;
         alertMessage = "";
@@ -111,6 +121,7 @@
   //Handlers
   const handleDelete = async (id) => {
     console.log("Attempting delete");
+    deleteSpinner = true
     let response = await tryCatch(
       "https://lit-mountain-37161.herokuapp.com/anime/delete/",
       id,
@@ -120,6 +131,7 @@
     console.log(response);
     console.log(response.status);
     if (response.status === 200) {
+      deleteSpinner = false;
       alertVisable = true;
       alertMessage = response.message;
       alertColor = "info";
@@ -142,7 +154,7 @@
   const handleEdit = async (id) => {
         //let upload = buildJsonFormData(form);
         console.log("Editing details for:", $animeDetail.title, $animeDetail._id)
-        console.log(JSON.stringify($animeDetail))
+        editSpinner = true;
     try {
       let response = await editAPIData(
         `https://lit-mountain-37161.herokuapp.com/anime/edit/${id}`,
@@ -150,6 +162,7 @@
       );
       console.log("Response status", response.status)
       if (response.status === 200) {
+      editSpinner = false;
       alertVisable = true;
       alertMessage = `Successfully edited anime ${$animeDetail.title}.`;
       alertColor = "info";
@@ -205,6 +218,12 @@
     <ModalBody>
       <p>Add "{$animeDetail.title}" to your list?</p>
       <img src={$animeDetail.image_url} alt={$animeDetail.title} />
+      {#if addSpinner}
+      <div class="spinnerDiv">
+        <Spinner  color="primary" class="text-center"/>
+      </div>
+      
+      {/if}
     </ModalBody>
 
     <ModalFooter>
@@ -220,25 +239,32 @@
   </Modal>
   <h2>Here be the anime!</h2>
   {#await $currentAnime}
+  {#if initialSpinner}
+  <div class="spinnerDiv">
+    <p>Loading that sweet, sweet anime... This may take longer on first try.</p>
+    <Spinner  color="primary" class="text-center"/>
+  </div>
+  {/if}
   <div>
-    <p>Loading that sweet, sweet anime...</p>
-    <Spinner color="primary" />
   </div>
   {:then anime}
-    <form let:isSubmitting on:submit|preventDefault={searchMore} action="">
+    <form on:submit|preventDefault={searchMore} action="">
       <input
         bind:value={currentSearch}
         type="text"
         placeholder="Search anime..."
       />
       <button on:click={searchMore}>Search</button>
-      {#if isSubmitting}
-      <Spinner />
-    {/if}
+      {#if searchSpinner}
+      <div class="spinnerDiv">
+        <Spinner  color="primary" class="text-center"/>
+      </div>
+      
+      {/if}
     </form>
     {#if searchTrigger}
       {#await $searchResults}
-      <div>
+      <div class="spinnerDiv">
         <Spinner color="primary" /> 
         <p>Loading...</p>
       </div>
@@ -356,6 +382,12 @@
           <input type="text" name="score" bind:value={$animeDetail.score} />
         </div>
       </form>
+
+      {#if editSpinner}
+        <div class="spinnerDiv">
+          <Spinner  color="primary" class="text-center"/>
+        </div>
+        {/if}
     </ModalBody>
 
     <ModalFooter>
@@ -379,6 +411,11 @@
       <h3>
         Are you sure you want to remove {$animeDetail.title} from your list?
       </h3>
+      {#if deleteSpinner}
+      <div class="spinnerDiv">
+        <Spinner  color="primary" class="text-center"/>
+      </div>
+      {/if}
     </ModalBody>
 
     <ModalFooter>
@@ -425,6 +462,9 @@
   .overflow-auto {
     max-height: 6rem;
     margin-top: 0.25rem;
+  }
+  .spinnerDiv{
+    padding: .25rem;
   }
 
   @media screen and (max-width: 800px) {
