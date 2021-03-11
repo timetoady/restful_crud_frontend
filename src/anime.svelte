@@ -223,16 +223,17 @@
 
     <ModalFooter>
       <button
+        class="confirmButton"
         on:click={() =>
           handleApiSend(
             "https://lit-mountain-37161.herokuapp.com/anime/",
             $animeDetail
           )}>CONFIRM</button
       >
-      <button on:click={toggleAddAnimeModal}>QUIT</button>
+      <button class="cancelButton" on:click={toggleAddAnimeModal}>CANCEL</button>
     </ModalFooter>
   </Modal>
-  <h2>Here be the anime!</h2>
+
   {#await $currentAnime}
     {#if initialSpinner}
       <div class="spinnerDiv">
@@ -245,12 +246,12 @@
     <div />
   {:then anime}
     <form on:submit|preventDefault={searchMore} action="">
-      <input
+      <input class="searchBox"
         bind:value={currentSearch}
         type="text"
         placeholder="Search anime..."
       />
-      <button on:click={searchMore}>Search</button>
+      <button class="searchButton" on:click={searchMore}>SEARCH</button>
       {#if searchSpinner}
         <div class="spinnerDiv">
           <Spinner color="primary" class="text-center" />
@@ -336,9 +337,9 @@
     </ModalBody>
 
     <ModalFooter>
-      <button on:click={toggleEditModal}>EDIT</button>
-      <button on:click={toggleDeleteModal}>DELETE</button>
-      <button on:click={toggleOptionModal}>CANCEL</button>
+      <button class="editButton" on:click={toggleEditModal}>EDIT</button>
+      <button class="deleteButton" on:click={toggleDeleteModal}>DELETE</button>
+      <button class="cancelButton" on:click={toggleOptionModal}>CANCEL</button>
     </ModalFooter>
   </Modal>
   <!-- edit modal here, will have all fields turned into inputs, can click save or cancel -->
@@ -351,16 +352,16 @@
     {toggleEditModal}
   >
     <ModalHeader {toggleEditModal}>
-      Edit {$animeDetail.title}
+      Edit "{$animeDetail.title}"
     </ModalHeader>
     <ModalBody>
       <form class="editForm" action="">
-        <div>
+        <div class="editInputs">
           <label for="title">Title: </label>
           <input type="text" name="title" bind:value={$animeDetail.title} />
         </div>
 
-        <div>
+        <div class="editInputs">
           <label for="image_url">Image URL:</label>
           <input
             type="text"
@@ -369,12 +370,12 @@
           />
         </div>
 
-        <div>
+        <div class="editInputs">
           <label for="type">Type:</label>
           <input type="text" name="type" bind:value={$animeDetail.type} />
         </div>
 
-        <div>
+        <div class="editInputs">
           <label for="episodes">Episodes</label>
           <input
             type="number"
@@ -383,7 +384,7 @@
           />
         </div>
 
-        <div>
+        <div class="editInputs">
           <label for="synopsis">Synopsis:</label>
           <input
             type="text"
@@ -392,9 +393,9 @@
           />
         </div>
 
-        <div>
-          <label for="image_url">Image URL:</label>
-          <input type="text" name="score" bind:value={$animeDetail.score} />
+        <div class="editInputs">
+          <label for="image_url">Score:</label>
+          <input type="number" name="score" bind:value={$animeDetail.score} />
         </div>
       </form>
 
@@ -406,10 +407,12 @@
     </ModalBody>
 
     <ModalFooter>
-      <button on:click={() => handleEdit($animeDetail._id, $animeDetail)}
+      <button
+        class="confirmButton"
+        on:click={() => handleEdit($animeDetail._id, $animeDetail)}
         >CONFIRM</button
       >
-      <button on:click={toggleEditModal}>CANCEL</button>
+      <button class="cancelButton" on:click={toggleEditModal}>CANCEL</button>
     </ModalFooter>
   </Modal>
 
@@ -436,8 +439,11 @@
     </ModalBody>
 
     <ModalFooter>
-      <button on:click={() => handleDelete($animeDetail._id)}>CONFIRM</button>
-      <button on:click={toggleDeleteModal}>CANCEL</button>
+      <button
+        class="confirmButton"
+        on:click={() => handleDelete($animeDetail._id)}>CONFIRM</button
+      >
+      <button class="cancelButton" on:click={toggleDeleteModal}>CANCEL</button>
     </ModalFooter>
   </Modal>
 </div>
@@ -463,7 +469,7 @@
   .cardText {
     text-align: left;
     font-size: smaller;
-    font-weight: 200;
+    font-weight: 500;
   }
 
   .imageDiv {
@@ -487,7 +493,44 @@
   .spinnerDiv {
     padding: 0.25rem;
   }
+  .editForm {
+    text-align: left;
+  }
+  .editInputs {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.25rem;
+  }
+  button{
+    border-radius: 3px;
 
+  }
+
+  .cancelButton {
+    border: 1px dashed red;
+    color: rgb(228, 85, 85);
+  }
+  .confirmButton {
+    color: white;
+    text-shadow: 2px 1px 5px black;
+    border: 1px solid black;
+    background-color: rgb(127, 189, 3);
+  }
+  .deleteButton{
+    color: red;
+    font-weight: 500;
+    border:1px solid rgb(228, 85, 85);
+  }
+  .editButton{
+    color: orange;
+    border: 1px solid rgb(200, 135, 14)
+  }
+
+  .searchButton{
+    margin-left: -.35rem;
+    z-index: 900;
+    border-radius: 0 3px 3px 0px !important;
+  }
   @media screen and (max-width: 800px) {
     .aGrid {
       grid-template-columns: 1fr 1fr;
@@ -496,6 +539,7 @@
       grid-template-columns: 1fr 1fr;
     }
   }
+  
 
   @media screen and (max-width: 600px) {
     .aGrid {
