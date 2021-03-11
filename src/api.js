@@ -29,3 +29,20 @@ export async function sendAPIData(URL, upload) {
     console.error(error);
   }
 }
+
+export async function editAPIData(URL, upload) {
+  try {
+    const response = await fetch(URL, {
+      method: "PUT",
+      headers: {
+        "Content-type": "application/json",
+      },
+      body: upload,
+    });
+    const data = await response;
+    console.log(data);
+    return data;
+  } catch (error) {
+    console.error(error);
+  }
+}

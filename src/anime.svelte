@@ -1,8 +1,9 @@
 <script>
   import { onMount } from "svelte";
-  import tryCatch, { sendAPIData } from "./api";
+  import tryCatch, { sendAPIData, editAPIData } from "./api";
   import { fade } from "svelte/transition";
   import { currentAnime, searchResults, animeDetail } from "./stores";
+  import { buildJsonFormData } from "./utilities";
   import {
     Card,
     CardBody,
@@ -28,6 +29,9 @@
   let open3 = false;
   let open4 = false;
   let open5 = false;
+
+
+  //Getters and setters
   const setCurrent = async () => {
     let animeSets = await tryCatch(
       "https://lit-mountain-37161.herokuapp.com/anime"
@@ -56,6 +60,29 @@
     );
     animeDetail.set(theAnime);
   };
+
+  const handleApiSend = async (URL, upload) => {
+    const response = await sendAPIData(URL, upload);
+    if (response._id) {
+      alertVisable = true;
+      alertMessage = `Anime ${response.title} added to your list.`;
+      alertColor = "info";
+      setTimeout(() => {
+        alertVisable = false;
+        alertMessage = "";
+      }, 3000);
+    } else{
+      alertVisable = true;
+      alertColor = "danger";
+      alertMessage = response.Message
+    }
+    searchTrigger = false;
+    toggleAddAnimeModal();
+    searchResults.set([])
+    setCurrent();
+  };
+
+  //Toggles
   const toggleAddAnimeModal = async (id = "") => {
     if (!id) {
       open = !open;
@@ -63,13 +90,25 @@
       getAnimeDetail(id).then((open = !open));
     }
   };
-  const handleApiSend = async (URL, upload) => {
-    await sendAPIData(URL, upload);
-    searchTrigger = false;
-    toggleAddAnimeModal();
-    setCurrent();
+  const toggleEditModal = () => {
+    console.log("toggleEdit!");
+    open4 = !open4;
   };
-  //Delete from set handler
+
+  function toggleDeleteModal() {
+    open5 = !open5;
+  }
+
+  function toggleOptionModal(id = "") {
+    console.log("Toggle option modal");
+    if (typeof id !== "string") {
+      open2 = !open2;
+    } else {
+      getAnimeByID(id).then((open2 = !open2));
+    }
+  }
+
+  //Handlers
   const handleDelete = async (id) => {
     console.log("Attempting delete");
     let response = await tryCatch(
@@ -77,7 +116,7 @@
       id,
       "DELETE"
     );
-    console.log("Delete Response:")
+    console.log("Delete Response:");
     console.log(response);
     console.log(response.status);
     if (response.status === 200) {
@@ -89,9 +128,8 @@
       setCurrent();
       setTimeout(() => {
         alertVisable = false;
-        alertMessage = ""
+        alertMessage = "";
       }, 3000);
-
     } else {
       toggleOptionModal();
       toggleDeleteModal();
@@ -101,27 +139,38 @@
     }
   };
 
-  const handleEdit = async () => {};
-
-  async function toggleOptionModal(id = "") {
-    console.log("Toggle option modal");
-    console.log(id);
-    if (typeof id !== "string") {
-      open2 = !open2;
+  const handleEdit = async (id) => {
+        //let upload = buildJsonFormData(form);
+        console.log("Editing details for:", $animeDetail.title, $animeDetail._id)
+        console.log(JSON.stringify($animeDetail))
+    try {
+      let response = await editAPIData(
+        `https://lit-mountain-37161.herokuapp.com/anime/edit/${id}`,
+        JSON.stringify($animeDetail)
+      );
+      console.log("Response status", response.status)
+      if (response.status === 200) {
+      alertVisable = true;
+      alertMessage = `Successfully edited anime ${$animeDetail.title}.`;
+      alertColor = "info";
+      toggleOptionModal();
+      toggleEditModal();
+      setCurrent();
+      setTimeout(() => {
+        alertVisable = false;
+        alertMessage = "";
+      }, 3000);
     } else {
-      getAnimeByID(id).then((open2 = !open2));
+      toggleOptionModal();
+      toggleEditModal();
+      alertVisable = true;
+      alertColor = "danger";
+      alertMessage = response.error;
     }
-  }
-
-  async function toggleDeleteModal(id) {
-    // if (!id) {
-    //   open5 = !open5;
-    // } else {
-    //   getAnimeByID(id).then((open5 = !open5));
-    // }
-
-    open5 = !open5;
-  }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   onMount(setCurrent);
 </script>
@@ -136,7 +185,7 @@
 <div>
   <!-- alert here -->
   <Alert
-    color="info"
+    color={alertColor}
     isOpen={alertVisable}
     toggle={() => (alertVisable = false)}
   >
@@ -171,23 +220,31 @@
   </Modal>
   <h2>Here be the anime!</h2>
   {#await $currentAnime}
+  <div>
     <p>Loading that sweet, sweet anime...</p>
     <Spinner color="primary" />
+  </div>
   {:then anime}
-    <form on:submit|preventDefault={searchMore} action="">
+    <form let:isSubmitting on:submit|preventDefault={searchMore} action="">
       <input
         bind:value={currentSearch}
         type="text"
         placeholder="Search anime..."
       />
       <button on:click={searchMore}>Search</button>
+      {#if isSubmitting}
+      <Spinner />
+    {/if}
     </form>
     {#if searchTrigger}
       {#await $searchResults}
-        <Spinner color="primary" /> Loading...
+      <div>
+        <Spinner color="primary" /> 
+        <p>Loading...</p>
+      </div>
       {:then animeResult}
         <div class="searchGrid">
-          {#each animeResult as result}
+        {#each animeResult as result}
             <div transition:fade class="displaySearch">
               <Card
                 style="height: 100%;"
@@ -250,18 +307,62 @@
     </ModalBody>
 
     <ModalFooter>
-      <button
-        on:click={() =>
-          handleEdit(
-            "https://lit-mountain-37161.herokuapp.com/anime/",
-            $animeDetail
-          )}>EDIT</button
-      >
+      <button on:click={toggleEditModal}>EDIT</button>
       <button on:click={toggleDeleteModal}>DELETE</button>
       <button on:click={toggleOptionModal}>CANCEL</button>
     </ModalFooter>
   </Modal>
   <!-- edit modal here, will have all fields turned into inputs, can click save or cancel -->
+
+  <Modal
+    backdrop="true"
+    keyboard="true"
+    autoFocus
+    isOpen={open4}
+    {toggleEditModal}
+  >
+    <ModalHeader {toggleEditModal}>
+      Edit {$animeDetail.title}
+    </ModalHeader>
+    <ModalBody>
+      <form class="editForm" action="">
+        <div>
+          <label for="title">Title: </label>
+          <input type="text" name="title" bind:value={$animeDetail.title} />
+        </div>
+
+        <div>
+          <label for="image_url">Image URL:</label>
+          <input type="text" name="image_url" bind:value={$animeDetail.image_url} />
+        </div>
+
+        <div>
+          <label for="type">Type:</label>
+          <input type="text" name="type" bind:value={$animeDetail.type} />
+        </div>
+
+        <div>
+          <label for="episodes">Episodes</label>
+          <input type="text" name="episodes" bind:value={$animeDetail.episodes} />
+        </div>
+
+        <div>
+          <label for="synopsis">Synopsis:</label>
+          <input type="text" name="synopsis" bind:value={$animeDetail.synopsis} />
+        </div>
+
+        <div>
+          <label for="image_url">Image URL:</label>
+          <input type="text" name="score" bind:value={$animeDetail.score} />
+        </div>
+      </form>
+    </ModalBody>
+
+    <ModalFooter>
+      <button on:click={() => handleEdit($animeDetail._id, $animeDetail)}>CONFIRM</button>
+      <button on:click={toggleEditModal}>CANCEL</button>
+    </ModalFooter>
+  </Modal>
 
   <!-- delete modal here, asks for confirm delete, then can be closed -->
   <Modal
@@ -275,9 +376,9 @@
       Delete {$animeDetail.title}
     </ModalHeader>
     <ModalBody>
-      <h2>
+      <h3>
         Are you sure you want to remove {$animeDetail.title} from your list?
-      </h2>
+      </h3>
     </ModalBody>
 
     <ModalFooter>
