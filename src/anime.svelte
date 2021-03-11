@@ -3,7 +3,6 @@
   import tryCatch, { sendAPIData, editAPIData } from "./api";
   import { fade } from "svelte/transition";
   import { currentAnime, searchResults, animeDetail } from "./stores";
-  import { buildJsonFormData } from "./utilities";
   import {
     Card,
     CardBody,
@@ -26,7 +25,6 @@
   let alertVisable = false;
   let open = false;
   let open2 = false;
-  let open3 = false;
   let open4 = false;
   let open5 = false;
   let initialSpinner = false;
@@ -37,12 +35,12 @@
 
   //Getters and setters
   const setCurrent = async () => {
-    initialSpinner= true
+    initialSpinner = true;
     let animeSets = await tryCatch(
       "https://lit-mountain-37161.herokuapp.com/anime"
     );
     currentAnime.set(animeSets);
-    initialSpinner= false
+    initialSpinner = false;
   };
   const searchMore = async () => {
     searchTrigger = true;
@@ -51,7 +49,7 @@
       `https://api.jikan.moe/v3/search/anime?q=${currentSearch}&limit=10`
     );
     searchResults.set(reply.results);
-    searchSpinner = false
+    searchSpinner = false;
     console.log("Search results:", $searchResults);
     return reply.results;
   };
@@ -81,14 +79,14 @@
         alertVisable = false;
         alertMessage = "";
       }, 3000);
-    } else{
+    } else {
       alertVisable = true;
       alertColor = "danger";
-      alertMessage = response.Message
+      alertMessage = response.Message;
     }
     searchTrigger = false;
     toggleAddAnimeModal();
-    searchResults.set([])
+    searchResults.set([]);
     setCurrent();
   };
 
@@ -101,7 +99,6 @@
     }
   };
   const toggleEditModal = () => {
-    console.log("toggleEdit!");
     open4 = !open4;
   };
 
@@ -110,7 +107,6 @@
   }
 
   function toggleOptionModal(id = "") {
-    console.log("Toggle option modal");
     if (typeof id !== "string") {
       open2 = !open2;
     } else {
@@ -121,7 +117,7 @@
   //Handlers
   const handleDelete = async (id) => {
     console.log("Attempting delete");
-    deleteSpinner = true
+    deleteSpinner = true;
     let response = await tryCatch(
       "https://lit-mountain-37161.herokuapp.com/anime/delete/",
       id,
@@ -152,34 +148,34 @@
   };
 
   const handleEdit = async (id) => {
-        //let upload = buildJsonFormData(form);
-        console.log("Editing details for:", $animeDetail.title, $animeDetail._id)
-        editSpinner = true;
+    //let upload = buildJsonFormData(form);
+    console.log("Editing details for:", $animeDetail.title, $animeDetail._id);
+    editSpinner = true;
     try {
       let response = await editAPIData(
         `https://lit-mountain-37161.herokuapp.com/anime/edit/${id}`,
         JSON.stringify($animeDetail)
       );
-      console.log("Response status", response.status)
+      console.log("Response status", response.status);
       if (response.status === 200) {
-      editSpinner = false;
-      alertVisable = true;
-      alertMessage = `Successfully edited anime ${$animeDetail.title}.`;
-      alertColor = "info";
-      toggleOptionModal();
-      toggleEditModal();
-      setCurrent();
-      setTimeout(() => {
-        alertVisable = false;
-        alertMessage = "";
-      }, 3000);
-    } else {
-      toggleOptionModal();
-      toggleEditModal();
-      alertVisable = true;
-      alertColor = "danger";
-      alertMessage = response.error;
-    }
+        editSpinner = false;
+        alertVisable = true;
+        alertMessage = `Successfully edited anime ${$animeDetail.title}.`;
+        alertColor = "info";
+        toggleOptionModal();
+        toggleEditModal();
+        setCurrent();
+        setTimeout(() => {
+          alertVisable = false;
+          alertMessage = "";
+        }, 3000);
+      } else {
+        toggleOptionModal();
+        toggleEditModal();
+        alertVisable = true;
+        alertColor = "danger";
+        alertMessage = response.error;
+      }
     } catch (error) {
       console.error(error);
     }
@@ -219,10 +215,9 @@
       <p>Add "{$animeDetail.title}" to your list?</p>
       <img src={$animeDetail.image_url} alt={$animeDetail.title} />
       {#if addSpinner}
-      <div class="spinnerDiv">
-        <Spinner  color="primary" class="text-center"/>
-      </div>
-      
+        <div class="spinnerDiv">
+          <Spinner color="primary" class="text-center" />
+        </div>
       {/if}
     </ModalBody>
 
@@ -239,14 +234,15 @@
   </Modal>
   <h2>Here be the anime!</h2>
   {#await $currentAnime}
-  {#if initialSpinner}
-  <div class="spinnerDiv">
-    <p>Loading that sweet, sweet anime... This may take longer on first try.</p>
-    <Spinner  color="primary" class="text-center"/>
-  </div>
-  {/if}
-  <div>
-  </div>
+    {#if initialSpinner}
+      <div class="spinnerDiv">
+        <p>
+          Loading that sweet, sweet anime... This may take longer on first try.
+        </p>
+        <Spinner color="primary" class="text-center" />
+      </div>
+    {/if}
+    <div />
   {:then anime}
     <form on:submit|preventDefault={searchMore} action="">
       <input
@@ -256,21 +252,20 @@
       />
       <button on:click={searchMore}>Search</button>
       {#if searchSpinner}
-      <div class="spinnerDiv">
-        <Spinner  color="primary" class="text-center"/>
-      </div>
-      
+        <div class="spinnerDiv">
+          <Spinner color="primary" class="text-center" />
+        </div>
       {/if}
     </form>
     {#if searchTrigger}
       {#await $searchResults}
-      <div class="spinnerDiv">
-        <Spinner color="primary" /> 
-        <p>Loading...</p>
-      </div>
+        <div class="spinnerDiv">
+          <Spinner color="primary" />
+          <p>Loading...</p>
+        </div>
       {:then animeResult}
         <div class="searchGrid">
-        {#each animeResult as result}
+          {#each animeResult as result}
             <div transition:fade class="displaySearch">
               <Card
                 style="height: 100%;"
@@ -292,21 +287,22 @@
           value={animeInfo._id}
           on:click={() => toggleOptionModal(animeInfo._id)}
         >
-          <Card style="height: 700px;">
+          <Card style="height: 570px;">
             <CardHeader>
               <CardTitle>{animeInfo.title}</CardTitle>
             </CardHeader>
             <CardBody>
               <CardSubtitle>Score: {animeInfo.score}</CardSubtitle>
-              <img
+              <div class="imageDiv">
+                <img
                 class="animeImage"
                 src={animeInfo.image_url}
                 alt="{animeInfo.title} Cover"
               />
+              </div>
+
               <div class="overflow-auto">
-                <CardText>
-                  <p class="cardText">{animeInfo.synopsis}</p>
-                </CardText>
+                <CardText />
               </div>
             </CardBody>
             <CardFooter
@@ -329,7 +325,14 @@
       {$animeDetail.title}
     </ModalHeader>
     <ModalBody>
-      <p class="overflow-auto">{$animeDetail.synopsis}</p>
+      <img
+        class="animeImage"
+        src={$animeDetail.image_url}
+        alt="{$animeDetail.title} Cover"
+      />
+      <div class="cardText">
+        <p class="overflow-auto">{$animeDetail.synopsis}</p>
+      </div>
     </ModalBody>
 
     <ModalFooter>
@@ -359,7 +362,11 @@
 
         <div>
           <label for="image_url">Image URL:</label>
-          <input type="text" name="image_url" bind:value={$animeDetail.image_url} />
+          <input
+            type="text"
+            name="image_url"
+            bind:value={$animeDetail.image_url}
+          />
         </div>
 
         <div>
@@ -369,12 +376,20 @@
 
         <div>
           <label for="episodes">Episodes</label>
-          <input type="text" name="episodes" bind:value={$animeDetail.episodes} />
+          <input
+            type="text"
+            name="episodes"
+            bind:value={$animeDetail.episodes}
+          />
         </div>
 
         <div>
           <label for="synopsis">Synopsis:</label>
-          <input type="text" name="synopsis" bind:value={$animeDetail.synopsis} />
+          <input
+            type="text"
+            name="synopsis"
+            bind:value={$animeDetail.synopsis}
+          />
         </div>
 
         <div>
@@ -385,13 +400,15 @@
 
       {#if editSpinner}
         <div class="spinnerDiv">
-          <Spinner  color="primary" class="text-center"/>
+          <Spinner color="primary" class="text-center" />
         </div>
-        {/if}
+      {/if}
     </ModalBody>
 
     <ModalFooter>
-      <button on:click={() => handleEdit($animeDetail._id, $animeDetail)}>CONFIRM</button>
+      <button on:click={() => handleEdit($animeDetail._id, $animeDetail)}
+        >CONFIRM</button
+      >
       <button on:click={toggleEditModal}>CANCEL</button>
     </ModalFooter>
   </Modal>
@@ -412,9 +429,9 @@
         Are you sure you want to remove {$animeDetail.title} from your list?
       </h3>
       {#if deleteSpinner}
-      <div class="spinnerDiv">
-        <Spinner  color="primary" class="text-center"/>
-      </div>
+        <div class="spinnerDiv">
+          <Spinner color="primary" class="text-center" />
+        </div>
       {/if}
     </ModalBody>
 
@@ -426,6 +443,7 @@
 </div>
 
 <style>
+
   .aGrid {
     display: grid;
     gap: 20px;
@@ -449,6 +467,10 @@
     font-weight: 200;
   }
 
+  .imageDiv{
+    margin-top: .5rem;
+  }
+
   .displaySearch img {
     width: 100%;
     max-width: 225px;
@@ -463,8 +485,8 @@
     max-height: 6rem;
     margin-top: 0.25rem;
   }
-  .spinnerDiv{
-    padding: .25rem;
+  .spinnerDiv {
+    padding: 0.25rem;
   }
 
   @media screen and (max-width: 800px) {

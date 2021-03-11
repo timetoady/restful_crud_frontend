@@ -1,7 +1,17 @@
 <script>
 	import Anime from './anime.svelte'
-	
 </script>
+
+<svelte:head>
+  <link
+    rel="stylesheet"
+    href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+  />
+  <link
+  rel="stylesheet"
+  href="./style.css"
+/>
+</svelte:head>
 
 <main>
 	<h1>Anime Enporium</h1>
@@ -14,6 +24,7 @@
 		text-align: center;
 		padding: 1em;
 		margin: 0 auto;
+		
 	}
 
 	h1 {
