@@ -50,16 +50,16 @@
     );
     searchResults.set(reply.results);
     searchSpinner = false;
-    console.log("Search results:", $searchResults);
+    // console.log("Search results:", $searchResults);
     return reply.results;
   };
   const getAnimeDetail = async (id) => {
     const detail = await tryCatch(`https://api.jikan.moe/v3/anime/`, id);
     animeDetail.set(detail);
-    console.log("Details of selected anime:", $animeDetail);
+    //console.log("Details of selected anime:", $animeDetail);
   };
   const getAnimeByID = async (id) => {
-    console.log(id);
+    //console.log(id);
     const theAnime = await tryCatch(
       "https://lit-mountain-37161.herokuapp.com/anime/",
       id
@@ -116,16 +116,16 @@
 
   //Handlers
   const handleDelete = async (id) => {
-    console.log("Attempting delete");
+    //console.log("Attempting delete");
     deleteSpinner = true;
     let response = await tryCatch(
       "https://lit-mountain-37161.herokuapp.com/anime/delete/",
       id,
       "DELETE"
     );
-    console.log("Delete Response:");
-    console.log(response);
-    console.log(response.status);
+    // console.log("Delete Response:");
+    //console.log(response);
+    //console.log(response.status);
     if (response.status === 200) {
       deleteSpinner = false;
       alertVisable = true;
@@ -149,14 +149,14 @@
 
   const handleEdit = async (id) => {
     //let upload = buildJsonFormData(form);
-    console.log("Editing details for:", $animeDetail.title, $animeDetail._id);
+    //console.log("Editing details for:", $animeDetail.title, $animeDetail._id);
     editSpinner = true;
     try {
       let response = await editAPIData(
         `https://lit-mountain-37161.herokuapp.com/anime/edit/${id}`,
         JSON.stringify($animeDetail)
       );
-      console.log("Response status", response.status);
+      //console.log("Response status", response.status);
       if (response.status === 200) {
         editSpinner = false;
         alertVisable = true;
@@ -295,10 +295,10 @@
               <CardSubtitle>Score: {animeInfo.score}</CardSubtitle>
               <div class="imageDiv">
                 <img
-                class="animeImage"
-                src={animeInfo.image_url}
-                alt="{animeInfo.title} Cover"
-              />
+                  class="animeImage"
+                  src={animeInfo.image_url}
+                  alt="{animeInfo.title} Cover"
+                />
               </div>
 
               <div class="overflow-auto">
@@ -377,7 +377,7 @@
         <div>
           <label for="episodes">Episodes</label>
           <input
-            type="text"
+            type="number"
             name="episodes"
             bind:value={$animeDetail.episodes}
           />
@@ -443,7 +443,6 @@
 </div>
 
 <style>
-
   .aGrid {
     display: grid;
     gap: 20px;
@@ -467,8 +466,8 @@
     font-weight: 200;
   }
 
-  .imageDiv{
-    margin-top: .5rem;
+  .imageDiv {
+    margin-top: 0.5rem;
   }
 
   .displaySearch img {
