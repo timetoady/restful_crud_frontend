@@ -214,6 +214,9 @@
     <ModalBody>
       <p>Add "{$animeDetail.title}" to your list?</p>
       <img src={$animeDetail.image_url} alt={$animeDetail.title} />
+      <div class="cardText">
+        <p class="overflow-auto">{$animeDetail.synopsis}</p>
+      </div>
       {#if addSpinner}
         <div class="spinnerDiv">
           <Spinner color="primary" class="text-center" />
@@ -233,16 +236,16 @@
       <button class="cancelButton" on:click={toggleAddAnimeModal}>CANCEL</button>
     </ModalFooter>
   </Modal>
-
+  {#if initialSpinner}
+  <div class="spinnerDiv">
+    <p>
+      Loading that sweet, sweet anime... This may take longer on first try while the database wakes up.
+    </p>
+    <Spinner color="primary" class="text-center" />
+  </div>
+{/if}
   {#await $currentAnime}
-    {#if initialSpinner}
-      <div class="spinnerDiv">
-        <p>
-          Loading that sweet, sweet anime... This may take longer on first try.
-        </p>
-        <Spinner color="primary" class="text-center" />
-      </div>
-    {/if}
+  Working on it...
     <div />
   {:then anime}
     <form on:submit|preventDefault={searchMore} action="">
