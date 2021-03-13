@@ -72,7 +72,7 @@
     const response = await sendAPIData(URL, upload);
     if (response._id) {
       alertVisable = true;
-      alertMessage = `Anime ${response.title} added to your list.`;
+      alertMessage = `Anime "${response.title}" added to your list.`;
       alertColor = "info";
       addSpinner = false;
       setTimeout(() => {
