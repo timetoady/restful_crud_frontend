@@ -200,7 +200,7 @@
   >
     {alertMessage}
   </Alert>
-  <!-- add to list modal here -->
+  <!-- add to list/ search modal here -->
   <Modal
     backdrop="true"
     keyboard="true"
