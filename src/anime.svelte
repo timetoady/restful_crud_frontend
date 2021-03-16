@@ -18,6 +18,26 @@
     ModalFooter,
     Alert,
   } from "sveltestrap";
+  import * as yup from "yup";
+  import { Form, Message, isInvalid } from "svelte-yup";
+  //Form validation
+  let schema = yup.object().shape({
+    title: yup.string().required().max(40).label("Title"),
+    image_url: yup.string().required().url().label("Image URL"),
+    type: yup.string().required().max(40).label("Type"),
+    episodes: yup.number().label("Episodes"),
+    synopsis: yup.string().label("Type"),
+    score: yup.number().label("Score"),
+  });
+  let isValid;
+  $: fields = { title: $animeDetail.title, image_url: $animeDetail.image_url, type: $animeDetail.type, episodes: $animeDetail.episodes, score: $animeDetail.score};
+  let submitted = false;
+  $: invalid = (name) => {
+    if (submitted) {
+      return isInvalid(schema, name, $animeDetail);
+    }
+    return false;
+  };
   let currentSearch;
   let searchTrigger = false;
   let alertMessage = "";
@@ -99,6 +119,7 @@
     }
   };
   const toggleEditModal = () => {
+    //let fields = { title: $animeDetail.title, img_url: $animeDetail.image_url, type: $animeDetail.type, episodes: $animeDetail.episodes, score: $animeDetail.score};
     open4 = !open4;
   };
 
@@ -151,33 +172,45 @@
     //let upload = buildJsonFormData(form);
     //console.log("Editing details for:", $animeDetail.title, $animeDetail._id);
     editSpinner = true;
-    try {
-      let response = await editAPIData(
-        `https://lit-mountain-37161.herokuapp.com/anime/edit/${id}`,
-        JSON.stringify($animeDetail)
-      );
-      //console.log("Response status", response.status);
-      if (response.status === 200) {
+    submitted = true;
+    console.log("Fields show as:", fields)
+    isValid = schema.isValidSync(fields);
+    console.log("Is valid?", isValid)
+    if (isValid) {
+      console.log("That's valid, yo")
+      try {
+        let response = await editAPIData(
+          `https://lit-mountain-37161.herokuapp.com/anime/edit/${id}`,
+          JSON.stringify($animeDetail)
+        );
+        //console.log("Response status", response.status);
+        if (response.status === 200) {
+          editSpinner = false;
+          alertVisable = true;
+          alertMessage = `Successfully edited anime ${$animeDetail.title}.`;
+          alertColor = "info";
+          toggleOptionModal();
+          toggleEditModal();
+          setCurrent();
+          setTimeout(() => {
+            alertVisable = false;
+            alertMessage = "";
+          }, 3000);
+        } else {
+          editSpinner = false;
+          toggleOptionModal();
+          toggleEditModal();
+          alertVisable = true;
+          alertColor = "danger";
+          alertMessage = response.error;
+        }
+      } catch (error) {
         editSpinner = false;
-        alertVisable = true;
-        alertMessage = `Successfully edited anime ${$animeDetail.title}.`;
-        alertColor = "info";
-        toggleOptionModal();
-        toggleEditModal();
-        setCurrent();
-        setTimeout(() => {
-          alertVisable = false;
-          alertMessage = "";
-        }, 3000);
-      } else {
-        toggleOptionModal();
-        toggleEditModal();
-        alertVisable = true;
-        alertColor = "danger";
-        alertMessage = response.error;
+        console.error(error);
       }
-    } catch (error) {
-      console.error(error);
+      
+    } else {
+      editSpinner = false;
     }
   };
 
@@ -213,7 +246,11 @@
     </ModalHeader>
     <ModalBody>
       <p>Add "{$animeDetail.title}" to your list?</p>
-      <img src={$animeDetail.image_url} alt={$animeDetail.title} />
+      <img
+        src={$animeDetail.image_url}
+        alt={$animeDetail.title}
+        loading="lazy"
+      />
       <div class="cardText">
         <p class="overflow-auto">{$animeDetail.synopsis}</p>
       </div>
@@ -233,23 +270,26 @@
             $animeDetail
           )}>CONFIRM</button
       >
-      <button class="cancelButton" on:click={toggleAddAnimeModal}>CANCEL</button>
+      <button class="cancelButton" on:click={toggleAddAnimeModal}>CANCEL</button
+      >
     </ModalFooter>
   </Modal>
   {#if initialSpinner}
-  <div class="spinnerDiv">
-    <p>
-      Loading that sweet, sweet anime... This may take longer on first try while the database wakes up.
-    </p>
-    <Spinner color="primary" class="text-center" />
-  </div>
-{/if}
+    <div class="spinnerDiv">
+      <p>
+        Loading that sweet, sweet anime... This may take longer on first try
+        while the database wakes up.
+      </p>
+      <Spinner color="primary" class="text-center" />
+    </div>
+  {/if}
   {#await $currentAnime}
-  Working on it...
+    Working on it...
     <div />
   {:then anime}
     <form on:submit|preventDefault={searchMore} action="">
-      <input class="searchBox"
+      <input
+        class="searchBox"
         bind:value={currentSearch}
         type="text"
         placeholder="Search anime..."
@@ -276,7 +316,12 @@
                 on:click={() => toggleAddAnimeModal(result.mal_id)}
                 body
               >
-                {result.title} <img src={result.image_url} alt="" /></Card
+                {result.title}
+                <img
+                  src={result.image_url}
+                  alt={result.title}
+                  loading="lazy"
+                /></Card
               >
             </div>
           {/each}
@@ -302,6 +347,7 @@
                   class="animeImage"
                   src={animeInfo.image_url}
                   alt="{animeInfo.title} Cover"
+                  loading="lazy"
                 />
               </div>
 
@@ -333,6 +379,7 @@
         class="animeImage"
         src={$animeDetail.image_url}
         alt="{$animeDetail.title} Cover"
+        loading="lazy"
       />
       <div class="cardText">
         <p class="overflow-auto">{$animeDetail.synopsis}</p>
@@ -358,7 +405,7 @@
       Edit "{$animeDetail.title}"
     </ModalHeader>
     <ModalBody>
-      <form class="editForm" action="">
+      <!-- <form class="editForm" action="">
         <div class="editInputs">
           <label for="title">Title: </label>
           <input type="text" name="title" bind:value={$animeDetail.title} />
@@ -400,7 +447,71 @@
           <label for="image_url">Score:</label>
           <input type="number" name="score" bind:value={$animeDetail.score} />
         </div>
-      </form>
+      </form> -->
+      <Form class="editForm" {schema} {fields} submitHandler={handleEdit} {submitted}>
+        <div class="editInputs">
+          <label for="title">Title: </label>
+          <input type="text" name="title" bind:value={$animeDetail.title} />
+          
+        </div>
+        <div class="messageDiv">
+          <Message name="title"/>
+        </div>
+        
+        <div class="editInputs">
+          <label for="image_url">Image URL:</label>
+          <input
+            type="text"
+            name="image_url"
+            bind:value={$animeDetail.image_url}
+          />
+        </div>
+        <div class="messageDiv">
+          <Message name="image_url"/>
+        </div>
+
+        <div class="editInputs">
+          <label for="type">Type:</label>
+          <input type="text" name="type" bind:value={$animeDetail.type} />
+        </div>
+        <div class="messageDiv">
+          <Message name="type"/>
+        </div>
+
+        <div class="editInputs">
+          <label for="episodes">Episodes</label>
+          <input
+            type="number"
+            name="episodes"
+            bind:value={$animeDetail.episodes}
+          />
+        </div>
+        <div class="messageDiv">
+          <Message name="episodes"/>
+        </div>
+        
+
+        <div class="editInputs">
+          <label for="image_url">Score:</label>
+          <input type="number" name="score" bind:value={$animeDetail.score} />
+        </div>
+
+        <div class="messageDiv">
+          <Message name="score"/>
+        </div>
+
+        <div class="editInputs">
+          <label for="synopsis">Synopsis:</label>
+          <input
+            type="textarea"
+            name="synopsis"
+            bind:value={$animeDetail.synopsis}
+          />
+        </div>
+        <div class="messageDiv">
+          <Message name="synopsis"/>
+        </div>
+      </Form>
 
       {#if editSpinner}
         <div class="spinnerDiv">
@@ -411,6 +522,7 @@
 
     <ModalFooter>
       <button
+      type="submit"
         class="confirmButton"
         on:click={() => handleEdit($animeDetail._id, $animeDetail)}
         >CONFIRM</button
@@ -504,9 +616,8 @@
     justify-content: space-between;
     padding: 0.25rem;
   }
-  button{
+  button {
     border-radius: 3px;
-
   }
 
   .cancelButton {
@@ -519,18 +630,18 @@
     border: 1px solid black;
     background-color: rgb(127, 189, 3);
   }
-  .deleteButton{
+  .deleteButton {
     color: red;
     font-weight: 500;
-    border:1px solid rgb(228, 85, 85);
+    border: 1px solid rgb(228, 85, 85);
   }
-  .editButton{
+  .editButton {
     color: orange;
-    border: 1px solid rgb(200, 135, 14)
+    border: 1px solid rgb(200, 135, 14);
   }
 
-  .searchButton{
-    margin-left: -.35rem;
+  .searchButton {
+    margin-left: -0.35rem;
     z-index: 900;
     border-radius: 0 3px 3px 0px !important;
   }
@@ -542,7 +653,6 @@
       grid-template-columns: 1fr 1fr;
     }
   }
-  
 
   @media screen and (max-width: 600px) {
     .aGrid {
@@ -551,5 +661,12 @@
     .searchGrid {
       grid-template-columns: 1fr;
     }
+  }
+
+  .invalid {
+    border-color: red !important;
+  }
+  .messageDiv{
+    text-align: right;
   }
 </style>
