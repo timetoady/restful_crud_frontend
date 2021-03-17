@@ -20,6 +20,7 @@
   } from "sveltestrap";
   import * as yup from "yup";
   import { Form, Message, isInvalid } from "svelte-yup";
+  import App from "./App.svelte";
   //Form validation
   let schema = yup.object().shape({
     title: yup.string().required().max(40).label("Title"),
@@ -30,7 +31,13 @@
     score: yup.number().label("Score"),
   });
   let isValid;
-  $: fields = { title: $animeDetail.title, image_url: $animeDetail.image_url, type: $animeDetail.type, episodes: $animeDetail.episodes, score: $animeDetail.score};
+  $: fields = {
+    title: $animeDetail.title,
+    image_url: $animeDetail.image_url,
+    type: $animeDetail.type,
+    episodes: $animeDetail.episodes,
+    score: $animeDetail.score,
+  };
   let submitted = false;
   $: invalid = (name) => {
     if (submitted) {
@@ -40,6 +47,7 @@
   };
   //Initial settings for variables
   let currentSearch;
+  let searchFilter;
   let searchTrigger = false;
   let alertMessage = "";
   let alertColor = "danger";
@@ -62,6 +70,14 @@
     );
     currentAnime.set(animeSets);
     initialSpinner = false;
+  };
+  const filterSearch = async () => {
+    searchSpinner = true;
+    let filtered = await tryCatch(
+      `https://lit-mountain-37161.herokuapp.com/anime/search/${searchFilter}`
+    );
+    currentAnime.set(filtered);
+    searchSpinner = false;
   };
   const searchMore = async () => {
     searchTrigger = true;
@@ -174,11 +190,11 @@
     //console.log("Editing details for:", $animeDetail.title, $animeDetail._id);
     editSpinner = true;
     submitted = true;
-    console.log("Fields show as:", fields)
+    console.log("Fields show as:", fields);
     isValid = schema.isValidSync(fields);
-    console.log("Is valid?", isValid)
+    console.log("Is valid?", isValid);
     if (isValid) {
-      console.log("That's valid, yo")
+      console.log("That's valid, yo");
       try {
         let response = await editAPIData(
           `https://lit-mountain-37161.herokuapp.com/anime/edit/${id}`,
@@ -209,17 +225,19 @@
         editSpinner = false;
         console.error(error);
       }
-      
     } else {
       editSpinner = false;
     }
   };
-const clearSearch = () => {
-  currentSearch = ""
-  searchTrigger = false;
-  searchResults.set([]);
-  
-}
+  const clearSearch = () => {
+    currentSearch = "";
+    searchTrigger = false;
+    searchResults.set([]);
+  };
+  function clearFilter() {
+    searchFilter = "";
+    setCurrent();
+  }
   onMount(setCurrent);
 </script>
 
@@ -293,23 +311,39 @@ const clearSearch = () => {
     Working on it...
     <div />
   {:then anime}
-    <form on:submit|preventDefault={searchMore} action="">
-      <input
-        class="searchBox"
-        bind:value={currentSearch}
-        type="text"
-        placeholder="Add more anime..."
-      />
-      <button class="searchButton" on:click={searchMore}>SEARCH</button>
-      {#if currentSearch}
-      <button class="" on:click={clearSearch}>CLEAR</button>
-      {/if}
-      {#if searchSpinner}
-        <div class="spinnerDiv">
-          <Spinner color="primary" class="text-center" />
-        </div>
-      {/if}
-    </form>
+    <div class="searchers">
+      <form on:submit|preventDefault={searchMore} action="">
+        <input
+          class="searchBox"
+          bind:value={currentSearch}
+          type="text"
+          placeholder="Add more anime..."
+        />
+        <button class="searchButton" on:click={searchMore}>SEARCH</button>
+        {#if currentSearch}
+          <button class="clear" on:click={clearSearch}>CLEAR</button>
+        {/if}
+      </form>
+
+      <form on:submit|preventDefault={filterSearch}>
+        <input
+          class="searchBox"
+          bind:value={searchFilter}
+          type="text"
+          placeholder="Filter current..."
+        />
+        <button class="searchButton" on:click={filterSearch}>SEARCH</button>
+        {#if searchFilter}
+          <button class="clear" on:click={clearFilter}>CLEAR</button>
+        {/if}
+      </form>
+    </div>
+    {#if searchSpinner}
+      <div class="spinnerDiv">
+        <Spinner color="primary" class="text-center" />
+      </div>
+    {/if}
+
     {#if searchTrigger}
       {#await $searchResults}
         <div class="spinnerDiv">
@@ -457,16 +491,21 @@ const clearSearch = () => {
           <input type="number" name="score" bind:value={$animeDetail.score} />
         </div>
       </form> -->
-      <Form class="editForm" {schema} {fields} submitHandler={handleEdit} {submitted}>
+      <Form
+        class="editForm"
+        {schema}
+        {fields}
+        submitHandler={handleEdit}
+        {submitted}
+      >
         <div class="editInputs">
           <label for="title">Title: </label>
           <input type="text" name="title" bind:value={$animeDetail.title} />
-          
         </div>
         <div class="messageDiv">
-          <Message name="title"/>
+          <Message name="title" />
         </div>
-        
+
         <div class="editInputs">
           <label for="image_url">Image URL:</label>
           <input
@@ -476,7 +515,7 @@ const clearSearch = () => {
           />
         </div>
         <div class="messageDiv">
-          <Message name="image_url"/>
+          <Message name="image_url" />
         </div>
 
         <div class="editInputs">
@@ -484,7 +523,7 @@ const clearSearch = () => {
           <input type="text" name="type" bind:value={$animeDetail.type} />
         </div>
         <div class="messageDiv">
-          <Message name="type"/>
+          <Message name="type" />
         </div>
 
         <div class="editInputs">
@@ -496,9 +535,8 @@ const clearSearch = () => {
           />
         </div>
         <div class="messageDiv">
-          <Message name="episodes"/>
+          <Message name="episodes" />
         </div>
-        
 
         <div class="editInputs">
           <label for="image_url">Score:</label>
@@ -506,7 +544,7 @@ const clearSearch = () => {
         </div>
 
         <div class="messageDiv">
-          <Message name="score"/>
+          <Message name="score" />
         </div>
 
         <div class="editInputs">
@@ -518,7 +556,7 @@ const clearSearch = () => {
           />
         </div>
         <div class="messageDiv">
-          <Message name="synopsis"/>
+          <Message name="synopsis" />
         </div>
       </Form>
 
@@ -531,7 +569,7 @@ const clearSearch = () => {
 
     <ModalFooter>
       <button
-      type="submit"
+        type="submit"
         class="confirmButton"
         on:click={() => handleEdit($animeDetail._id, $animeDetail)}
         >CONFIRM</button
@@ -617,19 +655,22 @@ const clearSearch = () => {
   .spinnerDiv {
     padding: 0.25rem;
   }
-  .editForm {
-    text-align: left;
+  .searchers {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
   }
   .editInputs {
     display: flex;
     justify-content: space-between;
     padding: 0.25rem;
   }
+  /* buttons */
   button {
     border-radius: 3px;
   }
-
-  .cancelButton {
+  .cancelButton,
+  .clear {
     border: 1px dashed red;
     color: rgb(228, 85, 85);
   }
@@ -654,12 +695,20 @@ const clearSearch = () => {
     z-index: 900;
     border-radius: 0 3px 3px 0px !important;
   }
+
   @media screen and (max-width: 800px) {
     .aGrid {
       grid-template-columns: 1fr 1fr;
     }
     .searchGrid {
       grid-template-columns: 1fr 1fr;
+    }
+    .searchers {
+      flex-direction: column;
+      justify-content: space-around;
+    }
+    .searchers form {
+      padding-top: 0.5rem;
     }
   }
 
@@ -670,12 +719,20 @@ const clearSearch = () => {
     .searchGrid {
       grid-template-columns: 1fr;
     }
+    .searchButton {
+      width: 100%;
+      margin-bottom: 0.5rem;
+      margin-left: 0;
+    }
+    .searchBox {
+      width: 100%;
+    }
   }
 
-  .invalid {
+  /* .invalid {
     border-color: red !important;
-  }
-  .messageDiv{
+  } */
+  .messageDiv {
     text-align: right;
   }
 </style>
