@@ -660,6 +660,11 @@
     flex-wrap: wrap;
     justify-content: space-between;
   }
+  /*inputs */
+  input:focus{
+    outline-color: #0004ff;
+    
+  }
   .editInputs {
     display: flex;
     justify-content: space-between;
@@ -694,6 +699,10 @@
     margin-left: -0.35rem;
     z-index: 900;
     border-radius: 0 3px 3px 0px !important;
+    color: white;
+    text-shadow: 1px 1px 2px black;
+    background-color: #0004ff;
+    border: 1px solid #0004ff;
   }
 
   @media screen and (max-width: 800px) {
