@@ -38,6 +38,7 @@
     }
     return false;
   };
+  //Initial settings for variables
   let currentSearch;
   let searchTrigger = false;
   let alertMessage = "";
@@ -213,7 +214,12 @@
       editSpinner = false;
     }
   };
-
+const clearSearch = () => {
+  currentSearch = ""
+  searchTrigger = false;
+  searchResults.set([]);
+  
+}
   onMount(setCurrent);
 </script>
 
@@ -292,9 +298,12 @@
         class="searchBox"
         bind:value={currentSearch}
         type="text"
-        placeholder="Search anime..."
+        placeholder="Add more anime..."
       />
       <button class="searchButton" on:click={searchMore}>SEARCH</button>
+      {#if currentSearch}
+      <button class="" on:click={clearSearch}>CLEAR</button>
+      {/if}
       {#if searchSpinner}
         <div class="spinnerDiv">
           <Spinner color="primary" class="text-center" />
