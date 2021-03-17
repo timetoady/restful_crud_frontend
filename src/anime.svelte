@@ -265,9 +265,14 @@
     isOpen={open}
     {toggleAddAnimeModal}
   >
+  <div class="modalTitle">
     <ModalHeader {toggleAddAnimeModal}>
       {$animeDetail.title}
-    </ModalHeader>
+      </ModalHeader>
+    <div>
+      <button class="exOut" on:click={toggleAddAnimeModal}><span >&#10005</span></button>
+    </div>
+  </div>
     <ModalBody>
       <p>Add "{$animeDetail.title}" to your list?</p>
       <img
@@ -414,9 +419,14 @@
     isOpen={open2}
     {toggleOptionModal}
   >
+  <div class="modalTitle">
     <ModalHeader {toggleOptionModal}>
       {$animeDetail.title}
-    </ModalHeader>
+     </ModalHeader>
+     <div>
+      <button class="exOut" on:click={toggleOptionModal}><span >&#10005</span></button>
+    </div>
+  </div>
     <ModalBody>
       <img
         class="animeImage"
@@ -633,7 +643,15 @@
     font-size: smaller;
     font-weight: 500;
   }
+  .modalTitle{
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+  }
 
+  .modal-header{
+    align-items: unset !important;
+  }
   .imageDiv {
     margin-top: 0.5rem;
   }
@@ -704,7 +722,17 @@
     background-color: #0004ff;
     border: 1px solid #0004ff;
   }
-
+  .exOut span{
+    color: black !important;
+    padding: .1rem .2rem;
+    font-weight: 600;
+    
+ 
+  }
+  .exOut {
+    background-color: transparent;
+    border: none;
+  }
   @media screen and (max-width: 800px) {
     .aGrid {
       grid-template-columns: 1fr 1fr;
