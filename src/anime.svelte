@@ -423,9 +423,9 @@
     <ModalHeader toggle={toggleOptionModal}>
       {$animeDetail.title}
      </ModalHeader>
-     <div>
+     <!-- <div>
       <button class="exOut" on:click={toggleOptionModal}><span >&#10005</span></button>
-    </div>
+    </div> -->
   </div>
     <ModalBody>
       <img
@@ -600,15 +600,13 @@
     font-size: smaller;
     font-weight: 500;
   }
-  .modalTitle{
+  /* .modalTitle{
     display: flex;
     justify-content: space-between;
     width: 100%;
-  }
+  } */
 
-  .modal-header{
-    align-items: unset !important;
-  }
+
   .imageDiv {
     margin-top: 0.5rem;
   }
