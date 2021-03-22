@@ -417,10 +417,10 @@
     keyboard="true"
     autoFocus
     isOpen={open2}
-    {toggleOptionModal}
+    toggle={toggleOptionModal}
   >
   <div class="modalTitle">
-    <ModalHeader {toggleOptionModal}>
+    <ModalHeader toggle={toggleOptionModal}>
       {$animeDetail.title}
      </ModalHeader>
      <div>
@@ -452,55 +452,12 @@
     keyboard="true"
     autoFocus
     isOpen={open4}
-    {toggleEditModal}
+    toggle={toggleEditModal}
   >
-    <ModalHeader {toggleEditModal}>
+    <ModalHeader toggle={toggleEditModal}>
       Edit "{$animeDetail.title}"
     </ModalHeader>
     <ModalBody>
-      <!-- <form class="editForm" action="">
-        <div class="editInputs">
-          <label for="title">Title: </label>
-          <input type="text" name="title" bind:value={$animeDetail.title} />
-        </div>
-
-        <div class="editInputs">
-          <label for="image_url">Image URL:</label>
-          <input
-            type="text"
-            name="image_url"
-            bind:value={$animeDetail.image_url}
-          />
-        </div>
-
-        <div class="editInputs">
-          <label for="type">Type:</label>
-          <input type="text" name="type" bind:value={$animeDetail.type} />
-        </div>
-
-        <div class="editInputs">
-          <label for="episodes">Episodes</label>
-          <input
-            type="number"
-            name="episodes"
-            bind:value={$animeDetail.episodes}
-          />
-        </div>
-
-        <div class="editInputs">
-          <label for="synopsis">Synopsis:</label>
-          <input
-            type="text"
-            name="synopsis"
-            bind:value={$animeDetail.synopsis}
-          />
-        </div>
-
-        <div class="editInputs">
-          <label for="image_url">Score:</label>
-          <input type="number" name="score" bind:value={$animeDetail.score} />
-        </div>
-      </form> -->
       <Form
         class="editForm"
         {schema}
@@ -594,9 +551,9 @@
     keyboard="true"
     autoFocus
     isOpen={open5}
-    {toggleDeleteModal}
+    toggle={toggleDeleteModal}
   >
-    <ModalHeader {toggleDeleteModal}>
+    <ModalHeader toggle={toggleDeleteModal}>
       Delete {$animeDetail.title}
     </ModalHeader>
     <ModalBody>
