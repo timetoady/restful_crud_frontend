@@ -40,7 +40,11 @@ export default {
 		svelte({
 			compilerOptions: {
 				// enable run-time checks when not in production
-				dev: !production
+				dev: !production,
+				hydratable: true,
+				css: css => {
+					css.write('public/build/bundle.css');
+				}
 			}
 		}),
 		// we'll extract any component CSS out into

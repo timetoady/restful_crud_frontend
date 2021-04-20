@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import tryCatch, { sendAPIData, editAPIData } from "./api";
   import { fade } from "svelte/transition";
-  import { currentAnime, searchResults, animeDetail } from "./stores";
+  import { currentAnime, searchResults, animeDetail, currentPath } from "./stores";
   import {
     Card,
     CardBody,
@@ -20,7 +20,8 @@
   } from "sveltestrap";
   import * as yup from "yup";
   import { Form, Message, isInvalid } from "svelte-yup";
-  import App from "./App.svelte";
+  
+  
   //Form validation
   let schema = yup.object().shape({
     title: yup.string().required().max(40).label("Title"),
@@ -239,6 +240,7 @@
     setCurrent();
   }
   onMount(setCurrent);
+  onMount(() => currentPath.set("anime"))
 </script>
 
 <svelte:head>
@@ -249,6 +251,11 @@
 </svelte:head>
 
 <div>
+  <div class="pageTitle">
+    <h1 class="pageTitle">Anime EMPORIUM</h1>
+    <p>Just a little place to collect anime for your use and fun.</p>
+  </div>
+
   <!-- alert here -->
   <Alert
     color={alertColor}
@@ -578,6 +585,25 @@
 </div>
 
 <style>
+
+.pageTitle h1{
+		color: #0004ff;
+		text-align: left;
+		text-transform: uppercase;
+		font-size: 4rem;
+		font-weight: 100;
+		margin-bottom: 0;
+	}
+	
+	.pageTitle p{
+		text-align: left;
+		margin-top: -.3rem;
+		font-style: italic;
+		font-weight: 400;
+	}
+
+
+
   .aGrid {
     display: grid;
     gap: 20px;
