@@ -1,6 +1,6 @@
-import gql from 'graphql-tag';
+import gql from "graphql-tag";
 
-export const ALL_MANGA =`
+export const ALL_MANGA = `
 query allManga{
   allManga{
     title
@@ -9,10 +9,13 @@ query allManga{
     ongoing
     publishedFrom
     publishedTo
-    
+    image_url
+    id
+    synopsis
     author{
       name
     }
   }
 }
-`
+`;
+
