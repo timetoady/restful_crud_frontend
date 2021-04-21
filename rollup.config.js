@@ -4,6 +4,7 @@ import resolve from '@rollup/plugin-node-resolve';
 import livereload from 'rollup-plugin-livereload';
 import { terser } from 'rollup-plugin-terser';
 import css from 'rollup-plugin-css-only';
+import replace from 'rollup-plugin-replace';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -44,12 +45,14 @@ export default {
 				hydratable: true,
 				css: css => {
 					css.write('public/build/bundle.css');
-				}
+				},
+				
 			}
 		}),
 		// we'll extract any component CSS out into
 		// a separate file - better for performance
 		css({ output: 'bundle.css' }),
+		
 
 		// If you have external dependencies installed from
 		// npm, you'll most likely need these plugins. In
@@ -61,7 +64,9 @@ export default {
 			dedupe: ['svelte']
 		}),
 		commonjs(),
-
+		replace({
+			'process.env.NODE_ENV': JSON.stringify('development'),
+	  }),
 		// In dev mode, call `npm run start` once
 		// the bundle has been generated
 		!production && serve(),

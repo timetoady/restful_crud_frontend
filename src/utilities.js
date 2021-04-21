@@ -6,3 +6,11 @@ export const buildJsonFormData = (form) => {
      }
 return jsonFormData
 }
+
+export function getNested(fn, defaultVal) {
+    try {
+      return fn();
+    } catch (e) {
+      return defaultVal;
+    }
+  }

@@ -2,7 +2,13 @@
   import { onMount } from "svelte";
   import tryCatch, { sendAPIData, editAPIData } from "./api";
   import { fade } from "svelte/transition";
-  import { currentAnime, searchResults, animeDetail, currentPath } from "./stores";
+  import {
+    currentAnime,
+    searchResults,
+    animeDetail,
+    currentPath,
+  } from "./stores";
+
   import {
     Card,
     CardBody,
@@ -20,8 +26,9 @@
   } from "sveltestrap";
   import * as yup from "yup";
   import { Form, Message, isInvalid } from "svelte-yup";
-  
-  
+
+
+
   //Form validation
   let schema = yup.object().shape({
     title: yup.string().required().max(40).label("Title"),
@@ -239,8 +246,9 @@
     searchFilter = "";
     setCurrent();
   }
+
   onMount(setCurrent);
-  onMount(() => currentPath.set("anime"))
+  onMount(() => currentPath.set("anime"));
 </script>
 
 <svelte:head>
@@ -272,14 +280,16 @@
     isOpen={open}
     {toggleAddAnimeModal}
   >
-  <div class="modalTitle">
-    <ModalHeader {toggleAddAnimeModal}>
-      {$animeDetail.title}
+    <div class="modalTitle">
+      <ModalHeader {toggleAddAnimeModal}>
+        {$animeDetail.title}
       </ModalHeader>
-    <div>
-      <button class="exOut" on:click={toggleAddAnimeModal}><span >&#10005</span></button>
+      <div>
+        <button class="exOut" on:click={toggleAddAnimeModal}
+          ><span>&#10005</span></button
+        >
+      </div>
     </div>
-  </div>
     <ModalBody>
       <p>Add "{$animeDetail.title}" to your list?</p>
       <img
@@ -426,14 +436,14 @@
     isOpen={open2}
     toggle={toggleOptionModal}
   >
-  <div class="modalTitle">
-    <ModalHeader toggle={toggleOptionModal}>
-      {$animeDetail.title}
-     </ModalHeader>
-     <!-- <div>
+    <div class="modalTitle">
+      <ModalHeader toggle={toggleOptionModal}>
+        {$animeDetail.title}
+      </ModalHeader>
+      <!-- <div>
       <button class="exOut" on:click={toggleOptionModal}><span >&#10005</span></button>
     </div> -->
-  </div>
+    </div>
     <ModalBody>
       <img
         class="animeImage"
@@ -585,24 +595,21 @@
 </div>
 
 <style>
+  .pageTitle h1 {
+    color: #0004ff;
+    text-align: left;
+    text-transform: uppercase;
+    font-size: 4rem;
+    font-weight: 100;
+    margin-bottom: 0;
+  }
 
-.pageTitle h1{
-		color: #0004ff;
-		text-align: left;
-		text-transform: uppercase;
-		font-size: 4rem;
-		font-weight: 100;
-		margin-bottom: 0;
-	}
-	
-	.pageTitle p{
-		text-align: left;
-		margin-top: -.3rem;
-		font-style: italic;
-		font-weight: 400;
-	}
-
-
+  .pageTitle p {
+    text-align: left;
+    margin-top: -0.3rem;
+    font-style: italic;
+    font-weight: 400;
+  }
 
   .aGrid {
     display: grid;
@@ -632,7 +639,6 @@
     width: 100%;
   } */
 
-
   .imageDiv {
     margin-top: 0.5rem;
   }
@@ -660,9 +666,8 @@
     justify-content: space-between;
   }
   /*inputs */
-  input:focus{
+  input:focus {
     outline-color: #0004ff;
-    
   }
   .editInputs {
     display: flex;
@@ -703,12 +708,10 @@
     background-color: #0004ff;
     border: 1px solid #0004ff;
   }
-  .exOut span{
+  .exOut span {
     color: black !important;
-    padding: .1rem .2rem;
+    padding: 0.1rem 0.2rem;
     font-weight: 600;
-    
- 
   }
   .exOut {
     background-color: transparent;

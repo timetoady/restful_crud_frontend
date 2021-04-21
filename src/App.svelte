@@ -1,9 +1,9 @@
 <script>
-	import { Router, Link, Route } from "svelte-routing";
+	import { Router, Route } from "svelte-routing"; 
 	import Anime from './anime.svelte'
 	import Manga from './manga.svelte'
 	import Nav from "./nav.svelte";
-	
+
 
 </script>
 

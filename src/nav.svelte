@@ -8,10 +8,6 @@
     Nav,
     NavItem,
     NavLink,
-    UncontrolledDropdown,
-    DropdownToggle,
-    DropdownMenu,
-    DropdownItem,
   } from "sveltestrap";
   export let url = "";
   let isOpen = false;

@@ -13,16 +13,21 @@ const setCurrent = async () => {
   };
 
 import { useQuery, useMutation, gql } from '@apollo/client'
-const ALL_COURSES = gql`
-  query {
-    allCourses {
-      id
-      title
-      description
-      defaultCredits
-      courseCode
+const ALL_MANGA = gql`
+query allManga{
+  allManga{
+    title
+    title_english
+    title_japanese
+    ongoing
+    publishedFrom
+    publishedTo
+    
+    author{
+      name
     }
   }
+}
 `
 
 const UPDATE_COURSE = gql`
