@@ -1,12 +1,14 @@
 <script>
   import { onMount } from "svelte";
-  import tryCatch, { sendAPIData, editAPIData } from "./api";
+  import tryCatch, { sendAPIData, editAPIData, tryCatchQL } from "./api";
+  import { ALL_MANGA } from "./graphql/queries";
   import { fade } from "svelte/transition";
   import {
     currentAnime,
     searchResults,
     animeDetail,
     currentPath,
+    currentManga
   } from "./stores";
 
   import {
@@ -26,6 +28,8 @@
   } from "sveltestrap";
   import * as yup from "yup";
   import { Form, Message, isInvalid } from "svelte-yup";
+
+  const mangaDB = "https://manga-graphql2.herokuapp.com/";
 
 
 
@@ -247,8 +251,21 @@
     setCurrent();
   }
 
+//preload manga along with anime
+
+const setMangaStore = async () => {
+     if($currentManga.length === 0) {
+  
+    let mangaSets = await tryCatchQL(mangaDB, ALL_MANGA);
+    currentManga.set(mangaSets.allManga);
+    console.log("Curren manga sets now", $currentManga);
+     } 
+
+  };
+
+
   onMount(setCurrent);
-  onMount(() => currentPath.set("anime"));
+  onMount(() => currentPath.set("anime"), setMangaStore);
 </script>
 
 <svelte:head>

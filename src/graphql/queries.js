@@ -12,6 +12,7 @@ query allManga{
     image_url
     id
     synopsis
+    volumes
     author{
       name
     }

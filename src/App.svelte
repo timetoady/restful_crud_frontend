@@ -3,7 +3,7 @@
 	import Anime from './anime.svelte'
 	import Manga from './manga.svelte'
 	import Nav from "./nav.svelte";
-
+	import { fly, fade } from "svelte/transition";
 
 </script>
 
@@ -20,8 +20,15 @@
 
 	  <Router >
 		<div>
-		  <Route path="/" component="{Anime}" />
-		  <Route path="manga" component="{Manga}" />
+			<div in:fly={{ y: 30, duration: 500 }}
+			out:fade
+			>
+				<Route path="/" component="{Anime}" />
+			</div>
+		  <div >
+			<Route path="manga" component="{Manga}" />
+		  </div>
+		  
 		  <!-- <Route path="about" component="{About}" /> -->
 		</div>
 	  </Router>

@@ -32,7 +32,7 @@
             {/if}
           </NavItem>
           <NavItem>
-            <NavLink href="https://github.com/bestguy/sveltestrap"
+            <NavLink href="https://github.com/timetoady/mangaGraphQL" target="_blank"
               >GitHub</NavLink
             >
           </NavItem>
