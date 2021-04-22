@@ -254,18 +254,19 @@
 //preload manga along with anime
 
 const setMangaStore = async () => {
-     if($currentManga.length === 0) {
-  
+
+    console.log("loading manga...")
     let mangaSets = await tryCatchQL(mangaDB, ALL_MANGA);
     currentManga.set(mangaSets.allManga);
     console.log("Curren manga sets now", $currentManga);
-     } 
+    
 
   };
 
 
   onMount(setCurrent);
-  onMount(() => currentPath.set("anime"), setMangaStore);
+  onMount(setMangaStore);
+  onMount(() => currentPath.set("anime"));
 </script>
 
 <svelte:head>

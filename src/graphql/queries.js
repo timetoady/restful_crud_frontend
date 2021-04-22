@@ -20,3 +20,19 @@ query allManga{
 }
 `;
 
+export const CHANGE_MANGA = `
+mutation updateManga ($id: Int!, $title: String!, $synopsis: String, $volumes: Int, $chapters: Int, $ongoing: Boolean, ) {
+  updateCourse (id: $id,
+    data: { 
+    title: $title,
+    synopsis: $synopsis,
+    volumes: $volumes,
+    chapters: $chapters,
+    ongoing: $ongoing,
+    }
+  ) {
+      id
+  }
+}
+
+`

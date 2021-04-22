@@ -1,7 +1,8 @@
 <script>
   import { onMount } from "svelte";
-  import { currentPath, currentManga, mangaDetail } from "./stores";
+  import { currentPath, currentManga, mangaDetail, mangaSearchResults } from "./stores";
   import { ALL_MANGA } from "./graphql/queries";
+  import { fade } from "svelte/transition";
   import tryCatch, { tryCatchQL } from "./api";
   import { paginate, LightPaginationNav } from "svelte-paginate";
   import {
@@ -14,29 +15,91 @@
     CardText,
     CardTitle,
     UncontrolledCollapse,
+    Spinner
   } from "sveltestrap";
   const mangaDB = "https://manga-graphql2.herokuapp.com/";
   $: console.log("Details manga: ", $mangaDetail);
   let mangaLoading = false;
-
+  let searchTrigger = false
+  let open = false
   const setMangaStore = async () => {
-     if($currentManga.length === 0) {
-    mangaLoading = true;
-    let mangaSets = await tryCatchQL(mangaDB, ALL_MANGA);
-    currentManga.set(mangaSets.allManga);
-    console.log("Curren manga sets now", $currentManga);
-    mangaLoading = false;
-     } 
-
+    if ($currentManga.length === 0) {
+      mangaLoading = true;
+      let mangaSets = await tryCatchQL(mangaDB, ALL_MANGA);
+      currentManga.set(mangaSets.allManga);
+      console.log("Curren manga sets now", $currentManga);
+      mangaLoading = false;
+    }
   };
-  //Next time: add, delete, get something by ID
-  let mangaSearch = ""
 
+
+  const addManga = async () => {
+    const CHANGE_MANGA = `
+mutation updateManga ($id: Int!, $title: String!, $synopsis: String, $volumes: Int, $chapters: Int, $ongoing: Boolean, ) {
+  updateCourse (id: $id,
+    data: { 
+    title: $title,
+    synopsis: $synopsis,
+    volumes: $volumes,
+    chapters: $chapters,
+    ongoing: $ongoing,
+    }
+  ) {
+      id
+  }
+}
+
+`;
+  };
+
+  const addAuthor = async (name) => {
+    const CHANGE_MANGA = `
+mutation addAnAuthor (name: String!, manga: [Manga]!) {
+  data: { 
+    name: ${name},
+    manga: [Something I Like, Something I don't Like]
+    }
+    ) {
+     id
+     name
+    }
+  }
+`;
+let madeAnAuthor = await tryCatchQL(mangaDB, CHANGE_MANGA);
+console.log(madeAnAuthor)
+  };
+
+  const getMangaDetail = async (id) => {
+    const detail = await tryCatch(`https://api.jikan.moe/v3/manga/`, id);
+    mangaDetail.set(detail);
+    //console.log("Details of selected anime:", $animeDetail);
+  };
+
+  const toggleAddMangaModal = async (id = "") => {
+    if (!id) {
+      open = !open;
+    } else {
+      getMangaDetail(id).then((open = !open));
+    }
+  };
+  //Next time: add, delete, get something by ID. May need some backend additional work.
+  let mangaSearch;
+
+
+  //Search more anime
   const searchMore = async () => {
+    searchTrigger = true
     const reply = await tryCatch(
       `https://api.jikan.moe/v3/search/manga?q=${mangaSearch}&limit=10`
     );
+    mangaSearchResults.set(reply.results)
     return reply.results;
+  };
+
+  const clearSearch = () => {
+    mangaSearch = "";
+    searchTrigger = false;
+    mangaSearchResults.set([]);
   };
 
   onMount(() => currentPath.set("manga"));
@@ -63,10 +126,57 @@
 
 <main>
   <h1>Manga Repository</h1>
-
+  <button on:click={() => addAuthor("Adam the Awesome")}>Click to add author!</button>
   {#if mangaLoading}
     Loading...
   {/if}
+  {#await $currentManga}
+    Manga is loading
+    {:then manga}
+    <div>
+      <form on:submit|preventDefault={searchMore} action="">
+        <input
+          class="searchBox"
+          bind:value={mangaSearch}
+          type="text"
+          placeholder="Search for more manga"
+        />
+        <button class="searchButton" on:click={searchMore}>SEARCH</button>
+        {#if mangaSearch}
+          <button class="clear" on:click={clearSearch}>CLEAR</button>
+        {/if}
+      </form>
+    </div>
+    {/await}
+
+    {#if searchTrigger}
+      {#await $mangaSearchResults}
+        <div class="spinnerDiv">
+          <Spinner color="primary" />
+          <p>Loading...</p>
+        </div>
+      {:then mangaResult}
+        <div class="searchGrid">
+          {#each mangaResult as result}
+            <div transition:fade class="displaySearch">
+              <Card
+                style="height: 100%;"
+                on:click={() => toggleAddMangaModal(result.mal_id)}
+                body
+              >
+                {result.title}
+                <img
+                  src={result.image_url}
+                  alt={result.title}
+                  loading="lazy"
+                /></Card
+              >
+            </div>
+          {/each}
+        </div>
+      {/await}
+    {/if}
+
   <div class="mangaGrid">
     {#each paginatedItems as item, index (item.id)}
       <div class="mangaCard">
@@ -87,11 +197,11 @@
               </div>
             </div>
             <div class="japanTitle">
-                <CardSubtitle>Japanese title: {item.title_japanese}</CardSubtitle>
+              <CardSubtitle>Japanese title: {item.title_japanese}</CardSubtitle>
             </div>
-            
 
             <CardText>
+              Author: {item.author["name"]}
               <Button color="primary" id="toggler{index}" class="mb-3"
                 >Synopsis</Button
               >
@@ -170,8 +280,8 @@
     width: 100%;
     height: auto;
   }
-  .japanTitle{
-      padding: 1rem;
+  .japanTitle {
+    padding: 1rem;
   }
   .synopsis {
     text-align: left;
@@ -180,6 +290,14 @@
   .footerItems {
     display: flex;
     justify-content: space-between;
+  }
+
+
+  .displaySearch img {
+    width: 100%;
+    max-width: 225px;
+    align-self: middle;
+    margin: 0 auto;
   }
 
   @media screen and (max-width: 900px) {
