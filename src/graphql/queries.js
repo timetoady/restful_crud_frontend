@@ -22,6 +22,7 @@ query allManga{
     synopsis
     volumes
     author
+    genres
   }
 }
 `;
@@ -74,7 +75,7 @@ export const addManga = async (input) => {
           publishedTo: ${data.publishedTo === null ? null : `"${data.publishedTo.toISOString()}"`},
           volumes: ${data.volumes},
           chapters: ${data.chapters},
-          genres: "${data.genres.join(", ")}"
+          genres: "${data.genres}"
       }, 
         )
      {

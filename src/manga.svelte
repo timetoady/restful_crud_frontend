@@ -26,6 +26,7 @@
     ModalBody,
     ModalFooter,
   } from "sveltestrap";
+    import { getNested, getGenres, returnDateFrom } from "./utilities"
   //const mangaDB = "https://manga-graphql3.herokuapp.com/";
   const mangaDB = "http://localhost:4000/";
   $: console.log("Details of selected manga: ", $mangaDetail);
@@ -60,16 +61,19 @@
   let searchSpinner = false;
   let loadingSpinner = false;
 
+
+
   const getMangaDetail = async (id) => {
     const detail = await tryCatch(`https://api.jikan.moe/v3/manga/`, id);
     mangaDetail.set(detail);
+    handleGenres()
     //console.log("Details of selected anime:", $animeDetail);
   };
 
-
+  $: console.log($mangaDetail.genres)
 
   const toggleAddMangaModal = async (id = "") => {
-    if (!id) {
+    if (id === "") {
       open = !open;
     } else {
       getMangaDetail(id).then((open = !open));
@@ -153,6 +157,17 @@
     resetAfterEdits()
     items = $currentManga;
   }
+
+  let currentGenres = []
+  let publishStartDate;
+  const handleGenres =  () => {
+    let theseGenres =  getGenres($mangaDetail.genres)
+    let thisDate = returnDateFrom($mangaDetail.published)
+    console.log("Start date:", publishStartDate)
+    console.log("The Genres are: ", theseGenres)
+    currentGenres = theseGenres.join(", ")
+    publishStartDate = `${thisDate}`.slice(0,15)
+  }
 </script>
 
 <main>
@@ -205,15 +220,31 @@ toggle={toggleDeleteModal}
 
     </div>
     <ModalBody>
-      <p>Add "{$mangaDetail.title}" to your list?</p>
+      <p>Add "{$mangaDetail.title}" to your list??</p>
       <img
         src={$mangaDetail.image_url}
         alt={$mangaDetail.title}
         loading="lazy"
       />
-      <div class="cardText">
-        <p class="overflow-auto">{$mangaDetail.synopsis}</p>
+      <div class="overflow-auto addMangaInfo">
+        <div>
+          
+          <p><strong>Genres:</strong> {currentGenres}</p>
+        </div>
+        <div class="flexThis">
+          <p> <strong>Status</strong> : {$mangaDetail.publishing === false ? "Complete" : "Ongoing"}</p>
+          <p><strong>Chapters</strong>: {$mangaDetail.chapters === null ? "Not in database." : $mangaDetail.chapters}</p>
+        </div>
+        <div class="flexThis">
+          <p><strong>Popularity</strong>: {$mangaDetail.popularity}</p>
+          <p><strong>Start date</strong>: {publishStartDate}</p>
+        </div>
+        <div class="cardText">
+          <p>{$mangaDetail.synopsis}</p>
+        </div>
       </div>
+      
+
       {#if addSpinner}
         <div class="spinnerDiv">
           <Spinner color="primary" class="text-center" />
@@ -329,6 +360,9 @@ toggle={toggleDeleteModal}
               <div>
                  Author: {item.author}
               </div>
+              <div>
+                Genres: {item.genres}
+             </div>
              <div class="buttons">
               <Button color="primary" id="toggler{index}"
               >Synopsis</Button
@@ -442,16 +476,29 @@ toggle={toggleDeleteModal}
   }
 
   .overflow-auto {
-    max-height: 6rem;
+    max-height: 8rem;
     margin-top: 0.25rem;
     text-align: left;
   }
+
 
   .mangaCard div:hover{
     border-radius: 20%;
   }
 .paginationDiv{
   padding: .4rem;
+}
+.flexThis{
+  display: flex;
+  justify-content: space-between;
+}
+.addMangaInfo{
+  padding: .25rem;
+}
+.addMangaInfo p{
+  font-size: smaller;
+  margin-bottom: .25rem; 
+  
 }
   @media screen and (max-width: 900px) {
     .mangaGrid {
