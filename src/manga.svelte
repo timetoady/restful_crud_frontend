@@ -26,46 +26,47 @@
     ModalBody,
     ModalFooter,
   } from "sveltestrap";
-  //const mangaDB = "https://manga-graphql2.herokuapp.com/";
+  //const mangaDB = "https://manga-graphql3.herokuapp.com/";
   const mangaDB = "http://localhost:4000/";
   $: console.log("Details of selected manga: ", $mangaDetail);
   let mangaLoading = false;
   let searchTrigger = false;
   let open = false;
+  let open2 = false;
+
   const setMangaStore = async () => {
     if ($currentManga.length === 0) {
       mangaLoading = true;
+      loadingSpinner = true;
       let mangaSets = await tryCatchQL(mangaDB, ALL_MANGA);
       currentManga.set(mangaSets.allManga);
       console.log("Curren manga sets now", $currentManga);
       mangaLoading = false;
+      loadingSpinner = false;
     }
   };
 
-
-
-  const addAuthor = async (name) => {
-    const CHANGE_MANGA = `
-mutation addAnAuthor (name: String!, manga: [Manga]!) {
-  data: { 
-    name: ${name},
-    manga: [Something I Like, Something I don't Like]
-    }
-    ) {
-     id
-     name
-    }
+  const resetAfterEdits = async () => {
+    mangaLoading = true;
+      loadingSpinner = true;
+      let mangaSets = await tryCatchQL(mangaDB, ALL_MANGA);
+      currentManga.set(mangaSets.allManga);
+      console.log("Curren manga sets now", $currentManga);
+      mangaLoading = false;
+      loadingSpinner = false;
+      currentPage = 1
   }
-`;
-    let madeAnAuthor = await tryCatchQL(mangaDB, CHANGE_MANGA);
-    console.log(madeAnAuthor);
-  };
+  let addSpinner = false;
+  let searchSpinner = false;
+  let loadingSpinner = false;
 
   const getMangaDetail = async (id) => {
     const detail = await tryCatch(`https://api.jikan.moe/v3/manga/`, id);
     mangaDetail.set(detail);
     //console.log("Details of selected anime:", $animeDetail);
   };
+
+
 
   const toggleAddMangaModal = async (id = "") => {
     if (!id) {
@@ -74,16 +75,27 @@ mutation addAnAuthor (name: String!, manga: [Manga]!) {
       getMangaDetail(id).then((open = !open));
     }
   };
+
+  function toggleDeleteModal(id = "") {
+    if (typeof id === "string") {
+      open2 = !open2;
+    } else {
+      console.log("Delete item is a number, getting info.")
+      handleGetByID(id).then((open2 = !open2));
+    }
+  }
   //Next time: add, delete, get something by ID. May need some backend additional work.
   let mangaSearch;
 
   //Search more anime
   const searchMore = async () => {
+    searchSpinner = true
     searchTrigger = true;
     const reply = await tryCatch(
       `https://api.jikan.moe/v3/search/manga?q=${mangaSearch}&limit=10`
     );
     mangaSearchResults.set(reply.results);
+    searchSpinner = false
     return reply.results;
   };
 
@@ -97,32 +109,88 @@ mutation addAnAuthor (name: String!, manga: [Manga]!) {
   onMount(setMangaStore);
 
   const handleAddManga = async (detail) => {
+
     const response = await addManga(detail)
+    toggleAddMangaModal()
     console.log(response)
     clearSearch()
+    resetAfterEdits()
+    items = $currentManga
+    currentPage = 1
   }
 
   $: items = $currentManga;
   let currentPage = 1;
-  let pageSize = 4;
+  let pageSize = 2;
   $: paginatedItems = paginate({ items, pageSize, currentPage });
   let currentID;
 
-  const handleGet = async (id) => {
+  const handleGetByID = async (id) => {
     const MANGA_BY_ID = `
     query thisManga{
     mangaById(id: ${id}){
     title
-    synopsis
+    id
+    image_url
     }}
     `;
     let thisManga = await tryCatchQL(mangaDB, MANGA_BY_ID);
     mangaDetail.set(thisManga.mangaById);
   };
+
+  const handleDelete = async (id) => {
+    console.log("Item to delete is: ",id)
+    const DELETE_MANGA = `
+    mutation deleteThisBook{
+    deleteManga(id: ${id}){
+    id
+    title
+    }}
+    `;
+    let deleteThis = await tryCatchQL(mangaDB, DELETE_MANGA);
+    alert(`Deleted ${deleteThis.deleteManga.title}`)
+    toggleDeleteModal()
+    resetAfterEdits()
+    items = $currentManga;
+  }
 </script>
 
 <main>
   <h1>Manga Repository</h1>
+<!-- delete modal here -->
+<Modal
+backdrop="true"
+keyboard="true"
+autoFocus
+isOpen={open2}
+toggle={toggleDeleteModal}
+>
+<div class="modalTitle">
+  <ModalHeader toggle={toggleDeleteModal}>
+    {$mangaDetail.title}
+  </ModalHeader>
+</div>
+<ModalBody>
+  <img
+    class="animeImage"
+    src={$mangaDetail.image_url}
+    alt="{$mangaDetail.title} Cover"
+    loading="lazy"
+  />
+  <div class="cardText">
+    <h5 class="overflow-auto">Are you sure you want to delete this?</h5>
+  </div>
+</ModalBody>
+
+<ModalFooter>
+  <!-- <button class="editButton" on:click={toggleEditModal}>EDIT</button> -->
+  <button class="cancelButton" on:click={() => handleDelete($mangaDetail.id)}>CONFIRM</button>
+  <button class="cancelButton" on:click={toggleDeleteModal}>CANCEL</button>
+</ModalFooter>
+</Modal>
+
+
+  <!-- add new manga modal -->
   <Modal
     backdrop="true"
     keyboard="true"
@@ -131,14 +199,10 @@ mutation addAnAuthor (name: String!, manga: [Manga]!) {
     {toggleAddMangaModal}
   >
     <div class="modalTitle">
-      <ModalHeader {toggleAddMangaModal}>
+      <ModalHeader toggle={toggleAddMangaModal}>
         {$mangaDetail.title}
       </ModalHeader>
-      <div>
-        <button class="exOut" on:click={toggleAddMangaModal}
-          ><span>&#10005</span></button
-        >
-      </div>
+
     </div>
     <ModalBody>
       <p>Add "{$mangaDetail.title}" to your list?</p>
@@ -150,11 +214,11 @@ mutation addAnAuthor (name: String!, manga: [Manga]!) {
       <div class="cardText">
         <p class="overflow-auto">{$mangaDetail.synopsis}</p>
       </div>
-      <!-- {#if addSpinner}
+      {#if addSpinner}
         <div class="spinnerDiv">
           <Spinner color="primary" class="text-center" />
         </div>
-      {/if} -->
+      {/if}
     </ModalBody>
 
     <ModalFooter>
@@ -167,13 +231,18 @@ mutation addAnAuthor (name: String!, manga: [Manga]!) {
     </ModalFooter>
   </Modal>
 
+
+  <!-- Search zone -->
   {#if mangaLoading}
     Loading...
+    <div class="spinnerDiv">
+      <Spinner color="primary" class="text-center" />
+    </div>
   {/if}
   {#await $currentManga}
     Manga is loading
   {:then manga}
-    <div>
+    <div class="searchDiv">
       <form on:submit|preventDefault={searchMore} action="">
         <input
           class="searchBox"
@@ -188,7 +257,11 @@ mutation addAnAuthor (name: String!, manga: [Manga]!) {
       </form>
     </div>
   {/await}
-
+  {#if searchSpinner}
+  <div class="spinnerDiv">
+    <Spinner color="primary" class="text-center" />
+  </div>
+{/if}
   {#if searchTrigger}
     {#await $mangaSearchResults}
       <div class="spinnerDiv">
@@ -216,6 +289,18 @@ mutation addAnAuthor (name: String!, manga: [Manga]!) {
       </div>
     {/await}
   {/if}
+  <div class="paginationDiv">
+    <LightPaginationNav
+    totalItems={items.length}
+    {pageSize}
+    {currentPage}
+    limit={2}
+    showStepOptions={true}
+    on:setPage={(e) => {
+      currentPage = e.detail.page;
+    }}
+  />
+  </div>
 
   <div class="mangaGrid">
     {#each paginatedItems as item, index (item.id)}
@@ -241,10 +326,16 @@ mutation addAnAuthor (name: String!, manga: [Manga]!) {
             </div>
 
             <CardText>
-              Author: {item.author}
-              <Button color="primary" id="toggler{index}" class="mb-3"
-                >Synopsis</Button
-              >
+              <div>
+                 Author: {item.author}
+              </div>
+             <div class="buttons">
+              <Button color="primary" id="toggler{index}"
+              >Synopsis</Button
+            >
+            <Button class="deleteButton" on:click={() => toggleDeleteModal(parseInt(item.id))}>DELETE</Button>
+             </div>
+             
               <UncontrolledCollapse toggler="#toggler{index}">
                 <div class="synopsis">
                   {item.synopsis}
@@ -268,16 +359,7 @@ mutation addAnAuthor (name: String!, manga: [Manga]!) {
       </div>
     {/each}
   </div>
-  <LightPaginationNav
-    totalItems={items.length}
-    {pageSize}
-    {currentPage}
-    limit={2}
-    showStepOptions={true}
-    on:setPage={(e) => {
-      currentPage = e.detail.page;
-    }}
-  />
+
 </main>
 
 <style>
@@ -331,6 +413,11 @@ mutation addAnAuthor (name: String!, manga: [Manga]!) {
     display: flex;
     justify-content: space-between;
   }
+  .buttons{
+    display: flex;
+    justify-content: space-around;
+    padding: .25rem;
+  }
 
   .displaySearch img {
     width: 100%;
@@ -338,7 +425,34 @@ mutation addAnAuthor (name: String!, manga: [Manga]!) {
     align-self: middle;
     margin: 0 auto;
   }
+  .searchDiv {
+    padding: 1rem;
+  }
+  .spinnerDiv{
+    padding: .75rem;
+  }
+  .searchGrid{
+    display: flex;
+    flex-wrap: wrap;
 
+  }
+  .searchGrid div{
+    padding: .4rem;
+    cursor: pointer;
+  }
+
+  .overflow-auto {
+    max-height: 6rem;
+    margin-top: 0.25rem;
+    text-align: left;
+  }
+
+  .mangaCard div:hover{
+    border-radius: 20%;
+  }
+.paginationDiv{
+  padding: .4rem;
+}
   @media screen and (max-width: 900px) {
     .mangaGrid {
       grid-template-columns: 1fr;
