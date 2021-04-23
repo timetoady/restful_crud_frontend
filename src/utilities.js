@@ -49,9 +49,14 @@ export function getAuthors(authorArray) {
 }
 
 export function getGenres(genreArray) {
-  const theGenres = [];
-  genreArray.forEach((genre) => {
-    theGenres.push(genre.name);
-  });
-  return theGenres;
+  if(genreArray === undefined){
+    return null
+  } else{
+    const theGenres = [];
+    genreArray.forEach((genre) => {
+      theGenres.push(genre.name);
+    });
+    return theGenres;
+  }
+
 }

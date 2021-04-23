@@ -72,8 +72,10 @@
 
   $: console.log($mangaDetail.genres)
 
-  const toggleAddMangaModal = async (id = "") => {
-    if (id === "") {
+  const toggleAddMangaModal = async (id) => {
+    console.log("ID showing as", id)
+    console.log(typeof id)
+    if (!id || typeof id === "object") {
       open = !open;
     } else {
       getMangaDetail(id).then((open = !open));

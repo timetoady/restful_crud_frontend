@@ -141,8 +141,8 @@
   };
 
   //Toggles
-  const toggleAddAnimeModal = async (id = "") => {
-    if (!id) {
+  const toggleAddAnimeModal = async (id) => {
+    if (!id || typeof id === "object") {
       open = !open;
     } else {
       getAnimeDetail(id).then((open = !open));
