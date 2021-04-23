@@ -17,7 +17,7 @@ export default async function tryCatch(URL, modifier = "", method = "GET", heade
     try {
       const response = await fetch(URL, {
         method: "POST",
-        headers: {"Content-type": "application/json"},
+        headers: {"Content-type": "application/json", "Access-Control-Allow-Origin": "*"},
         body: JSON.stringify({query: upload}),
       });
       const data = await response.json();

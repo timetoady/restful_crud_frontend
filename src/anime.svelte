@@ -29,7 +29,8 @@
   import * as yup from "yup";
   import { Form, Message, isInvalid } from "svelte-yup";
 
-  const mangaDB = "https://manga-graphql2.herokuapp.com/";
+  //const mangaDB = "https://manga-graphql2.herokuapp.com/";
+  const mangaDB = "http://localhost:4000";
 
 
 

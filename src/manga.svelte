@@ -1,7 +1,12 @@
 <script>
   import { onMount } from "svelte";
-  import { currentPath, currentManga, mangaDetail, mangaSearchResults } from "./stores";
-  import { ALL_MANGA } from "./graphql/queries";
+  import {
+    currentPath,
+    currentManga,
+    mangaDetail,
+    mangaSearchResults,
+  } from "./stores";
+  import { ALL_MANGA, addManga } from "./graphql/queries";
   import { fade } from "svelte/transition";
   import tryCatch, { tryCatchQL } from "./api";
   import { paginate, LightPaginationNav } from "svelte-paginate";
@@ -15,13 +20,18 @@
     CardText,
     CardTitle,
     UncontrolledCollapse,
-    Spinner
+    Spinner,
+    Modal,
+    ModalHeader,
+    ModalBody,
+    ModalFooter,
   } from "sveltestrap";
-  const mangaDB = "https://manga-graphql2.herokuapp.com/";
-  $: console.log("Details manga: ", $mangaDetail);
+  //const mangaDB = "https://manga-graphql2.herokuapp.com/";
+  const mangaDB = "http://localhost:4000/";
+  $: console.log("Details of selected manga: ", $mangaDetail);
   let mangaLoading = false;
-  let searchTrigger = false
-  let open = false
+  let searchTrigger = false;
+  let open = false;
   const setMangaStore = async () => {
     if ($currentManga.length === 0) {
       mangaLoading = true;
@@ -33,24 +43,6 @@
   };
 
 
-  const addManga = async () => {
-    const CHANGE_MANGA = `
-mutation updateManga ($id: Int!, $title: String!, $synopsis: String, $volumes: Int, $chapters: Int, $ongoing: Boolean, ) {
-  updateCourse (id: $id,
-    data: { 
-    title: $title,
-    synopsis: $synopsis,
-    volumes: $volumes,
-    chapters: $chapters,
-    ongoing: $ongoing,
-    }
-  ) {
-      id
-  }
-}
-
-`;
-  };
 
   const addAuthor = async (name) => {
     const CHANGE_MANGA = `
@@ -65,8 +57,8 @@ mutation addAnAuthor (name: String!, manga: [Manga]!) {
     }
   }
 `;
-let madeAnAuthor = await tryCatchQL(mangaDB, CHANGE_MANGA);
-console.log(madeAnAuthor)
+    let madeAnAuthor = await tryCatchQL(mangaDB, CHANGE_MANGA);
+    console.log(madeAnAuthor);
   };
 
   const getMangaDetail = async (id) => {
@@ -85,14 +77,13 @@ console.log(madeAnAuthor)
   //Next time: add, delete, get something by ID. May need some backend additional work.
   let mangaSearch;
 
-
   //Search more anime
   const searchMore = async () => {
-    searchTrigger = true
+    searchTrigger = true;
     const reply = await tryCatch(
       `https://api.jikan.moe/v3/search/manga?q=${mangaSearch}&limit=10`
     );
-    mangaSearchResults.set(reply.results)
+    mangaSearchResults.set(reply.results);
     return reply.results;
   };
 
@@ -104,6 +95,12 @@ console.log(madeAnAuthor)
 
   onMount(() => currentPath.set("manga"));
   onMount(setMangaStore);
+
+  const handleAddManga = async (detail) => {
+    const response = await addManga(detail)
+    console.log(response)
+    clearSearch()
+  }
 
   $: items = $currentManga;
   let currentPage = 1;
@@ -126,13 +123,56 @@ console.log(madeAnAuthor)
 
 <main>
   <h1>Manga Repository</h1>
-  <button on:click={() => addAuthor("Adam the Awesome")}>Click to add author!</button>
+  <Modal
+    backdrop="true"
+    keyboard="true"
+    autoFocus
+    isOpen={open}
+    {toggleAddMangaModal}
+  >
+    <div class="modalTitle">
+      <ModalHeader {toggleAddMangaModal}>
+        {$mangaDetail.title}
+      </ModalHeader>
+      <div>
+        <button class="exOut" on:click={toggleAddMangaModal}
+          ><span>&#10005</span></button
+        >
+      </div>
+    </div>
+    <ModalBody>
+      <p>Add "{$mangaDetail.title}" to your list?</p>
+      <img
+        src={$mangaDetail.image_url}
+        alt={$mangaDetail.title}
+        loading="lazy"
+      />
+      <div class="cardText">
+        <p class="overflow-auto">{$mangaDetail.synopsis}</p>
+      </div>
+      <!-- {#if addSpinner}
+        <div class="spinnerDiv">
+          <Spinner color="primary" class="text-center" />
+        </div>
+      {/if} -->
+    </ModalBody>
+
+    <ModalFooter>
+      <button
+        class="confirmButton"
+        on:click={() => handleAddManga($mangaDetail)}>CONFIRM</button
+      >
+      <button class="cancelButton" on:click={toggleAddMangaModal}>CANCEL</button
+      >
+    </ModalFooter>
+  </Modal>
+
   {#if mangaLoading}
     Loading...
   {/if}
   {#await $currentManga}
     Manga is loading
-    {:then manga}
+  {:then manga}
     <div>
       <form on:submit|preventDefault={searchMore} action="">
         <input
@@ -147,35 +187,35 @@ console.log(madeAnAuthor)
         {/if}
       </form>
     </div>
-    {/await}
+  {/await}
 
-    {#if searchTrigger}
-      {#await $mangaSearchResults}
-        <div class="spinnerDiv">
-          <Spinner color="primary" />
-          <p>Loading...</p>
-        </div>
-      {:then mangaResult}
-        <div class="searchGrid">
-          {#each mangaResult as result}
-            <div transition:fade class="displaySearch">
-              <Card
-                style="height: 100%;"
-                on:click={() => toggleAddMangaModal(result.mal_id)}
-                body
-              >
-                {result.title}
-                <img
-                  src={result.image_url}
-                  alt={result.title}
-                  loading="lazy"
-                /></Card
-              >
-            </div>
-          {/each}
-        </div>
-      {/await}
-    {/if}
+  {#if searchTrigger}
+    {#await $mangaSearchResults}
+      <div class="spinnerDiv">
+        <Spinner color="primary" />
+        <p>Loading...</p>
+      </div>
+    {:then mangaResult}
+      <div class="searchGrid">
+        {#each mangaResult as result}
+          <div transition:fade class="displaySearch">
+            <Card
+              style="height: 100%;"
+              on:click={() => toggleAddMangaModal(result.mal_id)}
+              body
+            >
+              {result.title}
+              <img
+                src={result.image_url}
+                alt={result.title}
+                loading="lazy"
+              /></Card
+            >
+          </div>
+        {/each}
+      </div>
+    {/await}
+  {/if}
 
   <div class="mangaGrid">
     {#each paginatedItems as item, index (item.id)}
@@ -201,7 +241,7 @@ console.log(madeAnAuthor)
             </div>
 
             <CardText>
-              Author: {item.author["name"]}
+              Author: {item.author}
               <Button color="primary" id="toggler{index}" class="mb-3"
                 >Synopsis</Button
               >
@@ -291,7 +331,6 @@ console.log(madeAnAuthor)
     display: flex;
     justify-content: space-between;
   }
-
 
   .displaySearch img {
     width: 100%;
