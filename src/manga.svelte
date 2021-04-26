@@ -27,8 +27,8 @@
     ModalFooter,
   } from "sveltestrap";
     import { getNested, getGenres, returnDateFrom } from "./utilities"
-  //const mangaDB = "https://manga-graphql3.herokuapp.com/";
-  const mangaDB = "http://localhost:4000/";
+  const mangaDB = "https://manga-graphql3.herokuapp.com/";
+  //const mangaDB = "http://localhost:4000/";
   $: console.log("Details of selected manga: ", $mangaDetail);
   let mangaLoading = false;
   let searchTrigger = false;
