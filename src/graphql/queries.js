@@ -6,7 +6,7 @@ import {
 } from "../utilities";
 import { tryCatchQL } from '../api'
 
-let mangaDB = 'http://localhost:4000/'
+let mangaDB = 'https://manga-graphql3.herokuapp.com/'
 
 export const ALL_MANGA = `
 query allManga{
@@ -23,6 +23,7 @@ query allManga{
     volumes
     author
     genres
+    favorite
   }
 }
 `;
@@ -58,6 +59,7 @@ export const addManga = async (input) => {
     volumes: input.volumes,
     synopsis: input.synopsis,
     chapters: input.chapters,
+    favorite: false,
     genres: getGenres(input.genres),
   };
   const NEW_MANGA = `
@@ -88,6 +90,46 @@ export const addManga = async (input) => {
     let madeAnAuthor = await tryCatchQL(mangaDB, NEW_MANGA);
     console.log(madeAnAuthor)
     return madeAnAuthor
+};
+
+export const editManga = async (input) => {
+  const data = {
+    title: input.title,
+    id: input.id,
+    author: input.author,
+    image_url: input.image_url,
+    ongoing: input.ongoing,
+    volumes: input.volumes,
+    synopsis: input.synopsis,
+    chapters: input.chapters,
+    favorite: input.favorite,
+    //genres: getGenres(input.genres),
+  };
+  const EDIT_MANGA = `
+    mutation editAManga{
+      updateManga(id: ${data.id},
+        data: {
+          title: "${data.title}",
+          author: "${data.author}",
+          image_url: "${data.image_url}",
+          ongoing: ${data.ongoing},
+          favorite: ${data.favorite}
+          synopsis: "${data.synopsis.replace(/"/g, "'")}",
+          volumes: ${data.volumes},
+          chapters: ${data.chapters},
+
+      }, 
+        )
+     {
+      title
+      author
+      id
+    }
+    }`;
+    console.log(EDIT_MANGA)
+    let editedAManga = await tryCatchQL(mangaDB, EDIT_MANGA);
+    console.log(editedAManga)
+    return editedAManga
 };
 
 // export const mangaDetail = async () => {

@@ -6,7 +6,7 @@
     mangaDetail,
     mangaSearchResults,
   } from "./stores";
-  import { ALL_MANGA, addManga } from "./graphql/queries";
+  import { ALL_MANGA, addManga, editManga } from "./graphql/queries";
   import { fade } from "svelte/transition";
   import tryCatch, { tryCatchQL } from "./api";
   import { paginate, LightPaginationNav } from "svelte-paginate";
@@ -25,15 +25,54 @@
     ModalHeader,
     ModalBody,
     ModalFooter,
+    CustomInput,
+    Badge,
+    Label,
+    Input,
+    //FormText,
   } from "sveltestrap";
-    import { getNested, getGenres, returnDateFrom } from "./utilities"
+  import { getGenres, returnDateFrom } from "./utilities";
+
+  import * as yup from "yup";
+  import { Form, Message, isInvalid } from "svelte-yup";
   const mangaDB = "https://manga-graphql3.herokuapp.com/";
   //const mangaDB = "http://localhost:4000/";
+
+  //Form validation
+  let schema = yup.object().shape({
+    title: yup.string().required().max(70).label("Title"),
+    image_url: yup.string().required().url().label("Image URL"),
+    synopsis: yup.string().label("Synopsis"),
+    volumes: yup.number().label("Volumes"),
+    chapters: yup.number().label("Chapters"),
+    ongoing: yup.boolean().required().label("Ongoing"),
+    ongoing: yup.boolean().label("Ongoing"),
+  });
+  let isValid;
+  $: fields = {
+    title: $mangaDetail.title,
+    image_url: $mangaDetail.image_url,
+    synopsis: $mangaDetail.synopsis,
+    volumes: $mangaDetail.volumes,
+    chapters: $mangaDetail.chapters,
+    ongoing: $mangaDetail.ongoing,
+    favorite: $mangaDetail.favorite,
+  };
+  let submitted = false;
+  $: invalid = (name) => {
+    if (submitted) {
+      return isInvalid(schema, name, $mangaDetail);
+    }
+    return false;
+  };
+
+  //Inital settings for variables
   $: console.log("Details of selected manga: ", $mangaDetail);
   let mangaLoading = false;
   let searchTrigger = false;
   let open = false;
   let open2 = false;
+  let openEdit = false;
 
   const setMangaStore = async () => {
     if ($currentManga.length === 0) {
@@ -41,7 +80,7 @@
       loadingSpinner = true;
       let mangaSets = await tryCatchQL(mangaDB, ALL_MANGA);
       currentManga.set(mangaSets.allManga);
-      console.log("Curren manga sets now", $currentManga);
+      console.log("Current manga sets now: ", $currentManga);
       mangaLoading = false;
       loadingSpinner = false;
     }
@@ -49,32 +88,32 @@
 
   const resetAfterEdits = async () => {
     mangaLoading = true;
-      loadingSpinner = true;
-      let mangaSets = await tryCatchQL(mangaDB, ALL_MANGA);
-      currentManga.set(mangaSets.allManga);
-      console.log("Curren manga sets now", $currentManga);
-      mangaLoading = false;
-      loadingSpinner = false;
-      currentPage = 1
-  }
+    loadingSpinner = true;
+    let mangaSets = await tryCatchQL(mangaDB, ALL_MANGA);
+    currentManga.set(mangaSets.allManga);
+    console.log("Current manga sets now after edits: ", $currentManga);
+    mangaLoading = false;
+    loadingSpinner = false;
+    currentPage = 1;
+  };
   let addSpinner = false;
+  let editSpinner = false;
   let searchSpinner = false;
   let loadingSpinner = false;
-
-
 
   const getMangaDetail = async (id) => {
     const detail = await tryCatch(`https://api.jikan.moe/v3/manga/`, id);
     mangaDetail.set(detail);
-    handleGenres()
+    handleGenres();
     //console.log("Details of selected anime:", $animeDetail);
   };
 
-  $: console.log($mangaDetail.genres)
+  $: console.log("Ongoing for this manga is: ", $mangaDetail.ongoing);
 
+  //Togglers
   const toggleAddMangaModal = async (id) => {
-    console.log("ID showing as", id)
-    console.log(typeof id)
+    console.log("ID showing as", id);
+    console.log(typeof id);
     if (!id || typeof id === "object") {
       open = !open;
     } else {
@@ -82,26 +121,36 @@
     }
   };
 
+  const toggleEditModal = async (id) => {
+    console.log("ID to edit showing as", id);
+    console.log(typeof id);
+    if (!id || typeof id === "object" || id === undefined) {
+      openEdit = !openEdit;
+    } else {
+      handleGetByID(id).then((openEdit = !openEdit));
+    }
+  };
+
   function toggleDeleteModal(id = "") {
     if (typeof id === "string") {
       open2 = !open2;
     } else {
-      console.log("Delete item is a number, getting info.")
+      console.log("Delete item is a number, getting info...");
       handleGetByID(id).then((open2 = !open2));
     }
   }
-  //Next time: add, delete, get something by ID. May need some backend additional work.
+
   let mangaSearch;
 
   //Search more anime
   const searchMore = async () => {
-    searchSpinner = true
+    searchSpinner = true;
     searchTrigger = true;
     const reply = await tryCatch(
       `https://api.jikan.moe/v3/search/manga?q=${mangaSearch}&limit=10`
     );
     mangaSearchResults.set(reply.results);
-    searchSpinner = false
+    searchSpinner = false;
     return reply.results;
   };
 
@@ -114,38 +163,56 @@
   onMount(() => currentPath.set("manga"));
   onMount(setMangaStore);
 
-  const handleAddManga = async (detail) => {
-
-    const response = await addManga(detail)
-    toggleAddMangaModal()
-    console.log(response)
-    clearSearch()
-    resetAfterEdits()
-    items = $currentManga
-    currentPage = 1
-  }
-
+  //Pagination setup
   $: items = $currentManga;
   let currentPage = 1;
   let pageSize = 2;
   $: paginatedItems = paginate({ items, pageSize, currentPage });
   let currentID;
 
+  //Get/POST handlers
+  //
+
+  const handleAddManga = async (detail) => {
+    const response = await addManga(detail);
+    toggleAddMangaModal();
+    console.log(response);
+    clearSearch();
+    resetAfterEdits();
+    items = $currentManga;
+    currentPage = 1;
+  };
+
   const handleGetByID = async (id) => {
     const MANGA_BY_ID = `
     query thisManga{
     mangaById(id: ${id}){
     title
+    author
     id
+    ongoing
     image_url
+    chapters
+    volumes
+    synopsis
+    publishedFrom
+    favorite
+    genres
     }}
     `;
     let thisManga = await tryCatchQL(mangaDB, MANGA_BY_ID);
     mangaDetail.set(thisManga.mangaById);
   };
+  $: fields = {
+    title: $mangaDetail.title,
+    image_url: $mangaDetail.image_url,
+    chapters: $mangaDetail.chapters,
+    volumes: $mangaDetail.volumes,
+    image_url: $mangaDetail.image_url,
+  };
 
   const handleDelete = async (id) => {
-    console.log("Item to delete is: ",id)
+    console.log("Item to delete is: ", id);
     const DELETE_MANGA = `
     mutation deleteThisBook{
     deleteManga(id: ${id}){
@@ -154,58 +221,127 @@
     }}
     `;
     let deleteThis = await tryCatchQL(mangaDB, DELETE_MANGA);
-    alert(`Deleted ${deleteThis.deleteManga.title}`)
-    toggleDeleteModal()
-    resetAfterEdits()
+    alert(`Deleted ${deleteThis.deleteManga.title}`);
+    toggleDeleteModal();
+    resetAfterEdits();
     items = $currentManga;
-  }
+  };
 
-  let currentGenres = []
+  let currentGenres = [];
   let publishStartDate;
-  const handleGenres =  () => {
-    let theseGenres =  getGenres($mangaDetail.genres)
-    let thisDate = returnDateFrom($mangaDetail.published)
-    console.log("Start date:", publishStartDate)
-    console.log("The Genres are: ", theseGenres)
-    currentGenres = theseGenres.join(", ")
-    publishStartDate = `${thisDate}`.slice(0,15)
-  }
+  const handleGenres = () => {
+    let theseGenres = getGenres($mangaDetail.genres);
+    let thisDate = returnDateFrom($mangaDetail.published);
+    console.log("Start date:", publishStartDate);
+    console.log("The Genres are: ", theseGenres);
+    currentGenres = theseGenres.join(", ");
+    publishStartDate = `${thisDate}`.slice(0, 15);
+  };
+
+  const handleEditTheManga = async (detail) => { 
+    editSpinner = true;
+    submitted = true;
+    console.log("Fields show as:", fields);
+    isValid = schema.isValidSync(fields);
+    if (isValid) {
+      console.log("Manga form validated.");
+      let response = await editManga(detail);
+      console.log("Response from edit manga: ", response.updateManga);
+      if (response.updateManga.id) {
+        editSpinner = false;
+        alert(`Edited ${response.updateManga.title}`);
+        toggleEditModal();
+        resetAfterEdits();
+        items = $currentManga;
+        currentPage = 1;
+      } else {
+        editSpinner = false;
+        toggleEditModal();
+        alert(`Reply was: ${response.updateManga.title}`);
+      }
+    }
+
+  };
+
+  // const handleEditManga = async () => {
+  //   editSpinner = true;
+  //   submitted = true;
+  //   console.log("Fields show as:", fields);
+  //   isValid = schema.isValidSync(fields);
+  //   const EDIT_MANGA = `
+  //   mutation editTheManga{
+  //     updateManga(id: ${id},
+  //     data: {
+  //       title: ${$mangaDetail.title},
+  //       image_url: ${$mangaDetail.image_url},
+  //       synopsis: ${$mangaDetail.synopsis},
+  //       volumes: ${$mangaDetail.volumes},
+  //       chapters: ${$mangaDetail.chapters},
+  //       ongoing: ${$mangaDetail.ongoing},
+  //       favorite: ${$mangaDetail.favorite}
+  //     }
+
+  //     ){
+  //   id
+  //   title
+  //   }}
+  //   `;
+  //   if (isValid) {
+  //     console.log("Manga form validated.")
+  //     let editThis = await tryCatchQL(mangaDB, EDIT_MANGA)
+  //     console.log("Edit this says: ", editThis)
+  //     if (editThis.status === 200){
+  //       editSpinner = false;
+  //       alert(`Edited ${editThis.editManga.title}`);
+  //       toggleEditModal();
+  //       resetAfterEdits();
+  //       items = $currentManga;
+  //     } else {
+  //       editSpinner = false;
+  //       toggleEditModal();
+  //       alert(`Reply was: ${editThis}`)
+  //     }
+  //   };
+  //   }
 </script>
 
 <main>
   <h1>Manga Repository</h1>
-<!-- delete modal here -->
-<Modal
-backdrop="true"
-keyboard="true"
-autoFocus
-isOpen={open2}
-toggle={toggleDeleteModal}
->
-<div class="modalTitle">
-  <ModalHeader toggle={toggleDeleteModal}>
-    {$mangaDetail.title}
-  </ModalHeader>
-</div>
-<ModalBody>
-  <img
-    class="animeImage"
-    src={$mangaDetail.image_url}
-    alt="{$mangaDetail.title} Cover"
-    loading="lazy"
-  />
-  <div class="cardText">
-    <h5 class="overflow-auto">Are you sure you want to delete this?</h5>
-  </div>
-</ModalBody>
 
-<ModalFooter>
-  <!-- <button class="editButton" on:click={toggleEditModal}>EDIT</button> -->
-  <button class="cancelButton" on:click={() => handleDelete($mangaDetail.id)}>CONFIRM</button>
-  <button class="cancelButton" on:click={toggleDeleteModal}>CANCEL</button>
-</ModalFooter>
-</Modal>
+  <!-- delete modal here -->
+  <Modal
+    backdrop="true"
+    keyboard="true"
+    autoFocus
+    isOpen={open2}
+    toggle={toggleDeleteModal}
+  >
+    <div class="modalTitle">
+      <ModalHeader toggle={toggleDeleteModal}>
+        {$mangaDetail.title}
+      </ModalHeader>
+    </div>
+    <ModalBody>
+      <img
+        class="animeImage"
+        src={$mangaDetail.image_url}
+        alt="{$mangaDetail.title} Cover"
+        loading="lazy"
+      />
+      <div class="cardText">
+        <h5 class="overflow-auto">Are you sure you want to delete this?</h5>
+      </div>
+    </ModalBody>
 
+    <ModalFooter>
+      <!-- <button class="editButton" on:click={toggleEditModal}>EDIT</button> -->
+      <button
+        class="cancelButton"
+        on:click={() => handleDelete($mangaDetail.id)}>CONFIRM</button
+      >
+      <button class="cancelButton" on:click={toggleDeleteModal}>CANCEL</button>
+    </ModalFooter>
+  </Modal>
 
   <!-- add new manga modal -->
   <Modal
@@ -219,7 +355,6 @@ toggle={toggleDeleteModal}
       <ModalHeader toggle={toggleAddMangaModal}>
         {$mangaDetail.title}
       </ModalHeader>
-
     </div>
     <ModalBody>
       <p>Add "{$mangaDetail.title}" to your list??</p>
@@ -230,12 +365,19 @@ toggle={toggleDeleteModal}
       />
       <div class="overflow-auto addMangaInfo">
         <div>
-          
           <p><strong>Genres:</strong> {currentGenres}</p>
         </div>
         <div class="flexThis">
-          <p> <strong>Status</strong> : {$mangaDetail.publishing === false ? "Complete" : "Ongoing"}</p>
-          <p><strong>Chapters</strong>: {$mangaDetail.chapters === null ? "Not in database." : $mangaDetail.chapters}</p>
+          <p>
+            <strong>Status</strong> : {$mangaDetail.publishing === false
+              ? "Complete"
+              : "Ongoing"}
+          </p>
+          <p>
+            <strong>Chapters</strong>: {$mangaDetail.chapters === null
+              ? "Not in database."
+              : $mangaDetail.chapters}
+          </p>
         </div>
         <div class="flexThis">
           <p><strong>Popularity</strong>: {$mangaDetail.popularity}</p>
@@ -245,7 +387,6 @@ toggle={toggleDeleteModal}
           <p>{$mangaDetail.synopsis}</p>
         </div>
       </div>
-      
 
       {#if addSpinner}
         <div class="spinnerDiv">
@@ -264,6 +405,108 @@ toggle={toggleDeleteModal}
     </ModalFooter>
   </Modal>
 
+  <!-- edit manga modal -->
+  <Modal
+    backdrop="true"
+    keyboard="true"
+    autoFocus
+    isOpen={openEdit}
+    {toggleEditModal}
+  >
+    <Form {fields} {schema} {submitted}>
+      <div class="modalTitle">
+        <ModalHeader toggle={toggleEditModal}>
+          <div class="flexThis">
+            <div class="labelDiv">
+              <label for="title">Edit</label>
+            </div>
+
+            <div class="editTitle">
+              <input plaintext name="title" bind:value={$mangaDetail.title} />
+            </div>
+          </div>
+          <div class="messageDiv">
+            <Message name="title" />
+          </div>
+        </ModalHeader>
+      </div>
+      <ModalBody>
+        <div class="flexAround">
+          <div class="flexedItemLarge">
+            <img
+              src={$mangaDetail.image_url}
+              alt={$mangaDetail.title}
+              loading="lazy"
+            />
+          </div>
+
+          <div class="flexedItemLarge">
+            <Label>Image URL<Input bind:value={$mangaDetail.image_url} /></Label
+            >
+            <div class="messageDiv">
+              <Message name="image_url" />
+            </div>
+            <CustomInput
+              type="switch"
+              id="ongoingSwitch"
+              name="ongoing"
+              label="Ongoing"
+              bind:checked={$mangaDetail.ongoing}
+            />
+            <CustomInput
+              type="switch"
+              id="favoriteSwitch"
+              name="favorite"
+              label="Favorite"
+              bind:checked={$mangaDetail.favorite}
+            />
+
+            <div class="flexedItem">
+              <label for="chapters">Chapters:</label>
+              <input
+                type="number"
+                name="chapters"
+                bind:value={$mangaDetail.chapters}
+              />
+            </div>
+            <div class="flexedItem">
+              <label for="chapters">Volumes:</label>
+              <input
+                type="number"
+                name="volumes"
+                bind:value={$mangaDetail.volumes}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="cardText">
+          <Input
+            type="textarea"
+            class="overflow-auto"
+            bind:value={$mangaDetail.synopsis}
+          />
+          <div class="messageDiv">
+            <Message name="synopsis" />
+          </div>
+        </div>
+
+        {#if editSpinner}
+          <div class="spinnerDiv">
+            <Spinner color="primary" class="text-center" />
+          </div>
+        {/if}
+      </ModalBody>
+
+      <ModalFooter>
+        <button
+          class="confirmButton"
+          on:click={() => handleEditTheManga($mangaDetail)}>CONFIRM</button
+        >
+        <button class="cancelButton" on:click={toggleEditModal}>CANCEL</button>
+      </ModalFooter>
+    </Form>
+  </Modal>
 
   <!-- Search zone -->
   {#if mangaLoading}
@@ -291,10 +534,10 @@ toggle={toggleDeleteModal}
     </div>
   {/await}
   {#if searchSpinner}
-  <div class="spinnerDiv">
-    <Spinner color="primary" class="text-center" />
-  </div>
-{/if}
+    <div class="spinnerDiv">
+      <Spinner color="primary" class="text-center" />
+    </div>
+  {/if}
   {#if searchTrigger}
     {#await $mangaSearchResults}
       <div class="spinnerDiv">
@@ -324,15 +567,15 @@ toggle={toggleDeleteModal}
   {/if}
   <div class="paginationDiv">
     <LightPaginationNav
-    totalItems={items.length}
-    {pageSize}
-    {currentPage}
-    limit={2}
-    showStepOptions={true}
-    on:setPage={(e) => {
-      currentPage = e.detail.page;
-    }}
-  />
+      totalItems={items.length}
+      {pageSize}
+      {currentPage}
+      limit={2}
+      showStepOptions={true}
+      on:setPage={(e) => {
+        currentPage = e.detail.page;
+      }}
+    />
   </div>
 
   <div class="mangaGrid">
@@ -341,6 +584,11 @@ toggle={toggleDeleteModal}
         <!-- {item.title} by {item.author.name} -->
         <Card class="mb-3">
           <CardHeader>
+            <div class="favoriteMark">
+              <Badge color="primary"
+                >{item.favorite === true ? "Favorite" : ""}</Badge
+              >
+            </div>
             <CardTitle><h4>{item.title}</h4></CardTitle>
           </CardHeader>
           <CardBody>
@@ -360,20 +608,28 @@ toggle={toggleDeleteModal}
 
             <CardText>
               <div>
-                 Author: {item.author}
+                Author: {item.author}
               </div>
               <div>
                 Genres: {item.genres}
-             </div>
-             <div class="buttons">
-              <Button color="primary" id="toggler{index}"
-              >Synopsis</Button
-            >
-            <Button class="deleteButton" on:click={() => toggleDeleteModal(parseInt(item.id))}>DELETE</Button>
-             </div>
-             
+              </div>
+              <div class="buttons">
+                <Button color="primary" id="toggler{index}">Synopsis</Button>
+                <Button
+                  class="deleteButton"
+                  on:click={() => toggleDeleteModal(parseInt(item.id))}
+                  >DELETE</Button
+                >
+
+                <Button
+                  class="deleteButton"
+                  on:click={() => toggleEditModal(parseInt(item.id))}
+                  >EDIT</Button
+                >
+              </div>
+
               <UncontrolledCollapse toggler="#toggler{index}">
-                <div class="synopsis">
+                <div class="synopsis overflow-auto">
                   {item.synopsis}
                 </div>
               </UncontrolledCollapse>
@@ -395,7 +651,6 @@ toggle={toggleDeleteModal}
       </div>
     {/each}
   </div>
-
 </main>
 
 <style>
@@ -449,10 +704,10 @@ toggle={toggleDeleteModal}
     display: flex;
     justify-content: space-between;
   }
-  .buttons{
+  .buttons {
     display: flex;
     justify-content: space-around;
-    padding: .25rem;
+    padding: 0.25rem;
   }
 
   .displaySearch img {
@@ -464,16 +719,15 @@ toggle={toggleDeleteModal}
   .searchDiv {
     padding: 1rem;
   }
-  .spinnerDiv{
-    padding: .75rem;
+  .spinnerDiv {
+    padding: 0.75rem;
   }
-  .searchGrid{
+  .searchGrid {
     display: flex;
     flex-wrap: wrap;
-
   }
-  .searchGrid div{
-    padding: .4rem;
+  .searchGrid div {
+    padding: 0.4rem;
     cursor: pointer;
   }
 
@@ -483,25 +737,62 @@ toggle={toggleDeleteModal}
     text-align: left;
   }
 
-
-  .mangaCard div:hover{
-    border-radius: 20%;
+  .mangaCard div:hover {
+    border-radius: 2%;
   }
-.paginationDiv{
-  padding: .4rem;
-}
-.flexThis{
-  display: flex;
-  justify-content: space-between;
-}
-.addMangaInfo{
-  padding: .25rem;
-}
-.addMangaInfo p{
-  font-size: smaller;
-  margin-bottom: .25rem; 
-  
-}
+  .paginationDiv {
+    padding: 0.4rem;
+  }
+  .flexThis {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    padding: 0.3rem;
+  }
+  .flexedItem {
+    padding: 0.25rem;
+  }
+  .flexedItem input {
+    max-width: 30%;
+  }
+  .flexedItemLarge {
+    max-width: 45%;
+    padding: 0.25rem;
+    text-align: left;
+    align-items: flex-start;
+  }
+  .flexedItemLarge img {
+    max-width: 100%;
+  }
+  .labelDiv label {
+    margin-bottom: 0;
+  }
+  /* .editTitle {
+    padding-left: 1rem;
+  } */
+  .editTitle input {
+    font-size: 1.5rem;
+    max-width: 90%;
+    border: none;
+  }
+
+  .flexAround {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-evenly;
+    padding: 0.3rem;
+  }
+
+  .addMangaInfo {
+    padding: 0.25rem;
+  }
+  .addMangaInfo p {
+    font-size: smaller;
+    margin-bottom: 0.25rem;
+  }
+  .favoriteMark {
+    text-align: right;
+  }
   @media screen and (max-width: 900px) {
     .mangaGrid {
       grid-template-columns: 1fr;
