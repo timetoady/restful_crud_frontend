@@ -278,6 +278,7 @@
         alertVisable = true;
         alertMessage = `Manga ${response.updateManga.title} has been successfully edited.`;
         alertColor = "info";
+        y=0
         setTimeout(() => {
         alertVisable = false;
         alertMessage = "";
