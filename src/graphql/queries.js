@@ -117,7 +117,6 @@ export const editManga = async (input) => {
           synopsis: "${data.synopsis.replace(/"/g, "'")}",
           volumes: ${data.volumes},
           chapters: ${data.chapters},
-
       }, 
         )
      {
@@ -132,6 +131,73 @@ export const editManga = async (input) => {
     return editedAManga
 };
 
-// export const mangaDetail = async () => {
+export const ongoing = async () => {
+const ONGOING = `
+query ongoingManga{
+  ongoing{
+    title
+    title_english
+    title_japanese
+    ongoing
+    publishedFrom
+    publishedTo
+    image_url
+    id
+    synopsis
+    volumes
+    author
+    genres
+    favorite
+  }
+}
+`
+let ongoingManga = await tryCatchQL(mangaDB, ONGOING);
+return ongoingManga
+}
 
-// }
+export const finished = async () => {
+  const FINISHED = `
+  query finishedManga{
+    finished{
+      title
+      title_english
+      title_japanese
+      ongoing
+      publishedFrom
+      publishedTo
+      image_url
+      id
+      synopsis
+      volumes
+      author
+      genres
+      favorite
+    }
+  }
+  `
+  let finishedManga = await tryCatchQL(mangaDB, FINISHED);
+  return finishedManga
+}
+export const filtered = async (filter) => {
+  const FILTERED = `
+  query filteredManga{
+    ${filter}{
+      title
+      title_english
+      title_japanese
+      ongoing
+      publishedFrom
+      publishedTo
+      image_url
+      id
+      synopsis
+      volumes
+      author
+      genres
+      favorite
+    }
+  }
+  `
+  let filteredManga = await tryCatchQL(mangaDB, FILTERED);
+  return filteredManga
+}

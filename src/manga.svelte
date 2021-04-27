@@ -6,7 +6,7 @@
     mangaDetail,
     mangaSearchResults,
   } from "./stores";
-  import { ALL_MANGA, addManga, editManga } from "./graphql/queries";
+  import { ALL_MANGA, addManga, editManga, ongoing, finished, filtered } from "./graphql/queries";
   import { fade } from "svelte/transition";
   import tryCatch, { tryCatchQL } from "./api";
   import { paginate, LightPaginationNav } from "svelte-paginate";
@@ -29,6 +29,7 @@
     Badge,
     Label,
     Input,
+    FormGroup
     //FormText,
   } from "sveltestrap";
   import { getGenres, returnDateFrom } from "./utilities";
@@ -42,11 +43,9 @@
   let schema = yup.object().shape({
     title: yup.string().required().max(70).label("Title"),
     image_url: yup.string().required().url().label("Image URL"),
-    synopsis: yup.string().label("Synopsis"),
-    volumes: yup.number().label("Volumes"),
-    chapters: yup.number().label("Chapters"),
-    ongoing: yup.boolean().required().label("Ongoing"),
+    synopsis: yup.string().required().label("Synopsis"),
     ongoing: yup.boolean().label("Ongoing"),
+    favorite: yup.boolean().label("Favorite"),
   });
   let isValid;
   $: fields = {
@@ -100,6 +99,9 @@
   let editSpinner = false;
   let searchSpinner = false;
   let loadingSpinner = false;
+  let filter = "all";
+  let filterArray = ["All", "Ongoing", "Finished", "Favorites"]
+  $: console.log(filter)
 
   const getMangaDetail = async (id) => {
     const detail = await tryCatch(`https://api.jikan.moe/v3/manga/`, id);
@@ -259,50 +261,55 @@
         toggleEditModal();
         alert(`Reply was: ${response.updateManga.title}`);
       }
+    } else{
+      console.log("Not validated, something amiss!")
     }
 
   };
 
-  // const handleEditManga = async () => {
-  //   editSpinner = true;
-  //   submitted = true;
-  //   console.log("Fields show as:", fields);
-  //   isValid = schema.isValidSync(fields);
-  //   const EDIT_MANGA = `
-  //   mutation editTheManga{
-  //     updateManga(id: ${id},
-  //     data: {
-  //       title: ${$mangaDetail.title},
-  //       image_url: ${$mangaDetail.image_url},
-  //       synopsis: ${$mangaDetail.synopsis},
-  //       volumes: ${$mangaDetail.volumes},
-  //       chapters: ${$mangaDetail.chapters},
-  //       ongoing: ${$mangaDetail.ongoing},
-  //       favorite: ${$mangaDetail.favorite}
-  //     }
+  const handleStatusFetch = async () => {
+    console.log("handleStatus called.")
+    if(filter === "Ongoing") {
+      console.log("Ongoing filter called.")
+      mangaLoading = true;
+      loadingSpinner = true;
+      let ongoingManga = await filtered("ongoing")
+      currentManga.set(ongoingManga.ongoing)
+      currentPage = 1;
+      mangaLoading = false;
+      loadingSpinner = false;
+    }
+    else if(filter === "Finished") {
+      console.log("Finished filter called.")
+      mangaLoading = true;
+      loadingSpinner = true;
+      let finishedManga = await filtered("finished")
+      currentManga.set(finishedManga.finished)
+      currentPage = 1;
+      mangaLoading = false;
+      loadingSpinner = false; 
+    }
+    else if(filter === "Favorites") {
+      console.log("Finished filter called.")
+      mangaLoading = true;
+      loadingSpinner = true;
+      let favoriteManga = await filtered("favorite")
+      currentManga.set(favoriteManga.favorite)
+      currentPage = 1;
+      mangaLoading = false;
+      loadingSpinner = false;
+    } else{
+      mangaLoading = true;
+      loadingSpinner = true;
+      let mangaSets = await tryCatchQL(mangaDB, ALL_MANGA);
+      currentManga.set(mangaSets.allManga);
+      currentPage = 1;
+      mangaLoading = false;
+      loadingSpinner = false;
+    }
+      
+  }
 
-  //     ){
-  //   id
-  //   title
-  //   }}
-  //   `;
-  //   if (isValid) {
-  //     console.log("Manga form validated.")
-  //     let editThis = await tryCatchQL(mangaDB, EDIT_MANGA)
-  //     console.log("Edit this says: ", editThis)
-  //     if (editThis.status === 200){
-  //       editSpinner = false;
-  //       alert(`Edited ${editThis.editManga.title}`);
-  //       toggleEditModal();
-  //       resetAfterEdits();
-  //       items = $currentManga;
-  //     } else {
-  //       editSpinner = false;
-  //       toggleEditModal();
-  //       alert(`Reply was: ${editThis}`)
-  //     }
-  //   };
-  //   }
 </script>
 
 <main>
@@ -467,6 +474,7 @@
                 type="number"
                 name="chapters"
                 bind:value={$mangaDetail.chapters}
+                placeholder = 0
               />
             </div>
             <div class="flexedItem">
@@ -474,6 +482,7 @@
               <input
                 type="number"
                 name="volumes"
+                placeholder = 0
                 bind:value={$mangaDetail.volumes}
               />
             </div>
@@ -518,6 +527,8 @@
   {#await $currentManga}
     Manga is loading
   {:then manga}
+  <div class="mangaFilter">
+
     <div class="searchDiv">
       <form on:submit|preventDefault={searchMore} action="">
         <input
@@ -532,6 +543,19 @@
         {/if}
       </form>
     </div>
+    <div >
+      <form  on:change|preventDefault={handleStatusFetch}>
+        <Label for="exampleCustomSelect">Filters</Label>
+        <select bind:value={filter} type="select" id="exampleCustomSelect" name="customSelect">
+          {#each filterArray as filter}
+          <option value={filter}>{filter}</option>
+          {/each}
+        </select>
+      </form>
+    </div>
+  </div>
+
+
   {/await}
   {#if searchSpinner}
     <div class="spinnerDiv">
@@ -716,9 +740,9 @@
     align-self: middle;
     margin: 0 auto;
   }
-  .searchDiv {
+  /* .searchDiv {
     padding: 1rem;
-  }
+  } */
   .spinnerDiv {
     padding: 0.75rem;
   }
@@ -792,6 +816,11 @@
   }
   .favoriteMark {
     text-align: right;
+  }
+  .mangaFilter{
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
   }
   @media screen and (max-width: 900px) {
     .mangaGrid {
