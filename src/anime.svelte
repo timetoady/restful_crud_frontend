@@ -74,6 +74,7 @@
   let addSpinner = false;
   let editSpinner = false;
   let deleteSpinner = false;
+  let y; 
 
   //Getters and setters
   const setCurrent = async () => {
@@ -125,6 +126,7 @@
       alertMessage = `Anime "${response.title}" added to your list.`;
       alertColor = "info";
       addSpinner = false;
+      y=0
       setTimeout(() => {
         alertVisable = false;
         alertMessage = "";
@@ -180,11 +182,12 @@
     if (response.status === 200) {
       deleteSpinner = false;
       alertVisable = true;
-      alertMessage = response.message;
+      alertMessage = `Anime ${$animeDetail.title} removed from the list.`;
       alertColor = "info";
       toggleOptionModal();
       toggleDeleteModal();
       setCurrent();
+      y=0
       setTimeout(() => {
         alertVisable = false;
         alertMessage = "";
@@ -222,6 +225,7 @@
           toggleOptionModal();
           toggleEditModal();
           setCurrent();
+          y=0
           setTimeout(() => {
             alertVisable = false;
             alertMessage = "";
@@ -264,11 +268,12 @@ const setMangaStore = async () => {
 
   };
 
-
   onMount(setCurrent);
   onMount(setMangaStore);
   onMount(() => currentPath.set("anime"));
 </script>
+
+<svelte:window bind:scrollY={y}/>
 
 <svelte:head>
   <link

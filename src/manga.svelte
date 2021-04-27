@@ -29,7 +29,7 @@
     Badge,
     Label,
     Input,
-    FormGroup
+    Alert,
     //FormText,
   } from "sveltestrap";
   import { getGenres, returnDateFrom } from "./utilities";
@@ -43,7 +43,7 @@
   let schema = yup.object().shape({
     title: yup.string().required().max(70).label("Title"),
     image_url: yup.string().required().url().label("Image URL"),
-    synopsis: yup.string().required().label("Synopsis"),
+    synopsis: yup.string().label("Synopsis"),
     ongoing: yup.boolean().label("Ongoing"),
     favorite: yup.boolean().label("Favorite"),
   });
@@ -72,6 +72,10 @@
   let open = false;
   let open2 = false;
   let openEdit = false;
+  //alert settings
+  let alertMessage = "";
+  let alertColor = "danger";
+  let alertVisable = false;
 
   const setMangaStore = async () => {
     if ($currentManga.length === 0) {
@@ -94,6 +98,7 @@
     mangaLoading = false;
     loadingSpinner = false;
     currentPage = 1;
+    y=0
   };
   let addSpinner = false;
   let editSpinner = false;
@@ -178,11 +183,19 @@
   const handleAddManga = async (detail) => {
     const response = await addManga(detail);
     toggleAddMangaModal();
-    console.log(response);
     clearSearch();
     resetAfterEdits();
     items = $currentManga;
     currentPage = 1;
+    alertVisable = true;
+    alertMessage = `manga "${detail.title}" added to your list.`;
+    alertColor = "info";
+    addSpinner = false;
+    y=0
+    setTimeout(() => {
+        alertVisable = false;
+        alertMessage = "";
+      }, 3000);
   };
 
   const handleGetByID = async (id) => {
@@ -223,10 +236,17 @@
     }}
     `;
     let deleteThis = await tryCatchQL(mangaDB, DELETE_MANGA);
-    alert(`Deleted ${deleteThis.deleteManga.title}`);
     toggleDeleteModal();
     resetAfterEdits();
+    y=0
     items = $currentManga;
+      alertVisable = true;
+      alertMessage = `Manga ${deleteThis.deleteManga.title} has been deleted from the list.`;
+      alertColor = "info";
+      setTimeout(() => {
+        alertVisable = false;
+        alertMessage = "";
+      }, 3000);
   };
 
   let currentGenres = [];
@@ -251,11 +271,17 @@
       console.log("Response from edit manga: ", response.updateManga);
       if (response.updateManga.id) {
         editSpinner = false;
-        alert(`Edited ${response.updateManga.title}`);
         toggleEditModal();
         resetAfterEdits();
         items = $currentManga;
         currentPage = 1;
+        alertVisable = true;
+        alertMessage = `Manga ${response.updateManga.title} has been successfully edited.`;
+        alertColor = "info";
+        setTimeout(() => {
+        alertVisable = false;
+        alertMessage = "";
+      }, 3000);
       } else {
         editSpinner = false;
         toggleEditModal();
@@ -309,11 +335,21 @@
     }
       
   }
-
+  let y;
 </script>
+
+<svelte:window bind:scrollY={y}/>
 
 <main>
   <h1>Manga Repository</h1>
+    <!-- alert here -->
+    <Alert
+    color={alertColor}
+    isOpen={alertVisable}
+    toggle={() => (alertVisable = false)}
+  >
+    {alertMessage}
+  </Alert>
 
   <!-- delete modal here -->
   <Modal
