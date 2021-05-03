@@ -535,7 +535,7 @@ const setMangaStore = async () => {
         </div>
 
         <div class="editInputs">
-          <label for="episodes">Episodes</label>
+          <label for="episodes">Episodes:</label>
           <input
             type="number"
             name="episodes"
@@ -695,12 +695,19 @@ const setMangaStore = async () => {
   }
   .editInputs {
     display: flex;
+    text-align: left;
+    align-items: center;
     justify-content: space-between;
     padding: 0.25rem;
+  }
+  .editInputs label{
+    text-align: left;
+    margin: 0;
   }
   /* buttons */
   button {
     border-radius: 3px;
+
   }
   .cancelButton,
   .clear {

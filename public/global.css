@@ -80,3 +80,23 @@ button:not(:disabled):active {
 button:focus {
 	border-color: #666;
 }
+
+@media screen and (max-width: 600px) {
+.paginationDiv span.option{
+	padding: 5px 8px !important;
+  }
+
+  a.navbar-brand{
+	  font-size: .8rem;
+  }
+  .navbar-toggler{
+	  padding: .15rem .4rem !important;
+	  font-size: .9rem !important;
+  }
+  main{
+	padding: 0 !important;
+  }
+  .mangaCard .card-body, .mangaCard .card-header, .mangaCard .card-footer{
+	padding: 7px 15px !important;
+}
+}

@@ -341,8 +341,12 @@
 
 <svelte:window bind:scrollY={y}/>
 
-<main>
-  <h1>Manga Repository</h1>
+<main class="mangaMain">
+  <div class="pageTitle">
+    <h1>Manga Repository</h1>
+    <p>Japanese Comics for the fun and enjoyment of all.</p>
+  </div>
+  
     <!-- alert here -->
     <Alert
     color={alertColor}
@@ -380,7 +384,7 @@
     <ModalFooter>
       <!-- <button class="editButton" on:click={toggleEditModal}>EDIT</button> -->
       <button
-        class="cancelButton"
+        class="deleteButton"
         on:click={() => handleDelete($mangaDetail.id)}>CONFIRM</button
       >
       <button class="cancelButton" on:click={toggleDeleteModal}>CANCEL</button>
@@ -490,20 +494,7 @@
             <div class="messageDiv">
               <Message name="image_url" />
             </div>
-            <CustomInput
-              type="switch"
-              id="ongoingSwitch"
-              name="ongoing"
-              label="Ongoing"
-              bind:checked={$mangaDetail.ongoing}
-            />
-            <CustomInput
-              type="switch"
-              id="favoriteSwitch"
-              name="favorite"
-              label="Favorite"
-              bind:checked={$mangaDetail.favorite}
-            />
+
 
             <div class="flexedItem">
               <label for="chapters">Chapters:</label>
@@ -523,6 +514,21 @@
                 bind:value={$mangaDetail.volumes}
               />
             </div>
+            <CustomInput
+              type="switch"
+              id="ongoingSwitch"
+              name="ongoing"
+              label="Ongoing"
+              bind:checked={$mangaDetail.ongoing}
+            />
+            <CustomInput
+              type="switch"
+              id="favoriteSwitch"
+              name="favorite"
+              label="Favorite"
+              bind:checked={$mangaDetail.favorite}
+            />
+
           </div>
         </div>
 
@@ -675,15 +681,15 @@
                 Genres: {item.genres}
               </div>
               <div class="buttons">
-                <Button color="primary" id="toggler{index}">Synopsis</Button>
+                <Button color="primary" id="toggler{index}">SYNOPSIS</Button>
                 <Button
-                  class="deleteButton"
+                color="danger"
                   on:click={() => toggleDeleteModal(parseInt(item.id))}
                   >DELETE</Button
                 >
 
                 <Button
-                  class="deleteButton"
+                  color="warning"
                   on:click={() => toggleEditModal(parseInt(item.id))}
                   >EDIT</Button
                 >
@@ -716,12 +722,18 @@
 
 <style>
   h1 {
-    color: #0004ff;
+    color: #F36A3F;
     text-align: left;
     text-transform: uppercase;
     font-size: 4rem;
     font-weight: 100;
     margin-bottom: 0;
+  }
+  .pageTitle p {
+    text-align: left;
+    margin-top: -0.3rem;
+    font-style: italic;
+    font-weight: 400;
   }
   .mangaImage {
     width: 100%;
@@ -768,7 +780,8 @@
   .buttons {
     display: flex;
     justify-content: space-around;
-    padding: 0.25rem;
+    padding: .5rem;
+    margin-top: .5rem;
   }
 
   .displaySearch img {
@@ -792,6 +805,37 @@
     cursor: pointer;
   }
 
+  .searchButton {
+    margin-left: -0.35rem;
+    z-index: 900;
+    border-radius: 0 3px 3px 0px !important;
+    color: white;
+    text-shadow: 1px 1px 2px black;
+    background-color: #F36A3F;
+    border: 1px solid #F36A3F;
+  }
+
+  .cancelButton,
+  .clear {
+    border: 1px dashed red;
+    color: rgb(228, 85, 85);
+  }
+  .confirmButton {
+    color: white;
+    text-shadow: 2px 1px 5px black;
+    border: 1px solid black;
+    background-color: rgb(127, 189, 3);
+  }
+  .deleteButton {
+    color: red;
+    font-weight: 500;
+    border: 1px solid rgb(228, 85, 85);
+  }
+  .editButton {
+    color: orange;
+    border: 1px solid rgb(200, 135, 14);
+  }
+
   .overflow-auto {
     max-height: 8rem;
     margin-top: 0.25rem;
@@ -803,6 +847,7 @@
   }
   .paginationDiv {
     padding: 0.4rem;
+    margin: .75rem 0;
   }
   .flexThis {
     display: flex;
@@ -812,9 +857,15 @@
   }
   .flexedItem {
     padding: 0.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
   .flexedItem input {
-    max-width: 30%;
+    max-width: 40%;
+  }
+  .flexedItem label {
+    margin: 0;
   }
   .flexedItemLarge {
     max-width: 45%;
@@ -858,11 +909,37 @@
     display: flex;
     justify-content: space-evenly;
     align-items: center;
+    margin-top: 1rem;
   }
   @media screen and (max-width: 900px) {
     .mangaGrid {
       grid-template-columns: 1fr;
       max-width: 500px;
     }
+    .pageTitle h1{
+      font-size: 3rem;
+    }
+    .pageTitle p{
+      font-size: 1.3rem;
+    }
+
+  }
+  @media screen and (max-width: 600px) {
+    .mangaFilter{
+      flex-direction: column;
+    }
+    .mangaFilter input, .mangaFilter button, .mangaFilter select, .mangaFilter label{
+      font-size: smaller;
+    }
+    .mangaFilter form{
+      margin-top: .4rem;
+    }
+    .pageTitle h1{
+      font-size: 1.7rem;
+    }
+    .pageTitle p{
+      font-size: 1rem;
+    }
+
   }
 </style>
