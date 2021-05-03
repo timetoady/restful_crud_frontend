@@ -721,7 +721,7 @@
 </main>
 
 <style>
-  h1 {
+  .pageTitle h1 {
     color: #F36A3F;
     text-align: left;
     text-transform: uppercase;
@@ -935,7 +935,7 @@
       margin-top: .4rem;
     }
     .pageTitle h1{
-      font-size: 1.7rem;
+      font-size: 2rem;
     }
     .pageTitle p{
       font-size: 1rem;

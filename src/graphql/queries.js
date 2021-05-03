@@ -42,7 +42,6 @@ mutation updateManga ($id: Int!, $title: String!, $synopsis: String, $volumes: I
       id
   }
 }
-
 `;
 
 export const addManga = async (input) => {

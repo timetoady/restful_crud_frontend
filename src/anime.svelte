@@ -779,6 +779,9 @@ const setMangaStore = async () => {
     .searchBox {
       width: 100%;
     }
+    .pageTitle h1{
+      font-size: 2rem;
+    }
   }
 
   /* .invalid {
